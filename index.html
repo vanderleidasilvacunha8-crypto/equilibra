@@ -190,32 +190,37 @@ h1,h2,h3{font-family:'Syne',sans-serif}
 .ia-calc-result{font-family:'Syne',sans-serif;font-size:1.8rem;color:var(--primary);text-align:center;padding:.5rem;font-weight:700}
 
 /* MODAL ADICIONAR */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:400;
-  align-items:flex-end;justify-content:center}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:400;
+  align-items:flex-end;justify-content:center;cursor:pointer}
+.modal-sheet{cursor:default}
 .modal-overlay.open{display:flex}
-.modal-sheet{background:var(--surface);border-radius:24px 24px 0 0;padding:1.5rem;width:100%;max-height:90vh;overflow-y:auto}
-.modal-handle{width:40px;height:4px;background:#e2e8f0;border-radius:50px;margin:0 auto 1.25rem}
-.modal-title{font-size:1rem;font-weight:800;margin-bottom:1.25rem;color:var(--text)}
-.tipo-switch{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.1rem}
-.tipo-btn{padding:.7rem;border-radius:12px;border:2px solid #e2e8f0;background:transparent;
-  font-size:.875rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif}
+.modal-sheet{background:var(--surface);border-radius:24px 24px 0 0;padding:1rem 1.25rem 1.5rem;width:100%;max-height:75vh;overflow-y:auto}
+.modal-handle{width:40px;height:4px;background:#e2e8f0;border-radius:50px;margin:0 auto .75rem}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.modal-title{font-size:1rem;font-weight:800;color:var(--text);margin:0}
+.modal-close-btn{width:32px;height:32px;border-radius:50%;background:#f1f5f9;border:none;
+  font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--text2);flex-shrink:0;font-weight:700}
+.tipo-switch{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.75rem}
+.tipo-btn{padding:.6rem;border-radius:10px;border:2px solid #e2e8f0;background:transparent;
+  font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif}
 .tipo-btn.gasto.sel{background:#fef2f2;border-color:var(--danger);color:var(--danger)}
 .tipo-btn.ganho.sel{background:#f0fdf4;border-color:var(--success);color:var(--success)}
-.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:1rem}
-.cat-chip{padding:.5rem .3rem;border-radius:10px;border:1.5px solid #e2e8f0;background:transparent;
-  text-align:center;cursor:pointer;transition:all .2s;font-size:.65rem;font-weight:600;color:var(--text2)}
-.cat-chip .cat-icon{font-size:1.2rem;display:block;margin-bottom:.2rem}
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem;margin-bottom:.75rem}
+.cat-chip{padding:.4rem .2rem;border-radius:10px;border:1.5px solid #e2e8f0;background:transparent;
+  text-align:center;cursor:pointer;transition:all .2s;font-size:.6rem;font-weight:600;color:var(--text2)}
+.cat-chip .cat-icon{font-size:1.1rem;display:block;margin-bottom:.15rem}
 .cat-chip.sel{border-color:var(--primary);background:var(--primary-glow);color:var(--primary)}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
-.field{margin-bottom:.9rem}
-.field label{display:block;font-size:.78rem;font-weight:700;color:var(--text2);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.4px}
-.field input,.field select,.field textarea{width:100%;padding:.75rem .9rem;border:1.5px solid #e2e8f0;
-  border-radius:12px;font-size:.92rem;font-family:'Plus Jakarta Sans',sans-serif;
+.field{margin-bottom:.7rem}
+.field label{display:block;font-size:.75rem;font-weight:700;color:var(--text2);margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.4px}
+.field input,.field select,.field textarea{width:100%;padding:.65rem .85rem;border:1.5px solid #e2e8f0;
+  border-radius:10px;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;
   background:var(--surface2);color:var(--text);transition:all .2s}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px var(--primary-glow)}
-.btn-salvar{width:100%;padding:.9rem;background:linear-gradient(135deg,var(--primary),var(--primary-light));
-  border:none;border-radius:14px;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;
-  font-family:'Plus Jakarta Sans',sans-serif;margin-top:.5rem}
+.btn-salvar{width:100%;padding:.75rem;background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  border:none;border-radius:12px;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;margin-top:.35rem}
 
 /* BOTTOM NAV */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);
@@ -343,9 +348,9 @@ h1,h2,h3{font-family:'Syne',sans-serif}
     </div>
 
     <div class="quick-actions">
-      <div class="qa-btn" onclick="abrirModal('gasto')"><div class="qa-icon">💸</div><div class="qa-label">Gasto</div></div>
-      <div class="qa-btn" onclick="abrirModal('ganho')"><div class="qa-icon">💰</div><div class="qa-label">Ganho</div></div>
-      <div class="qa-btn" onclick="abrirModal('compromisso')"><div class="qa-icon">📅</div><div class="qa-label">Agenda</div></div>
+      <div class="qa-btn" onclick="ativarTab('financas');abrirModal('gasto')"><div class="qa-icon">💸</div><div class="qa-label">Gasto</div></div>
+      <div class="qa-btn" onclick="ativarTab('financas');abrirModal('ganho')"><div class="qa-icon">💰</div><div class="qa-label">Ganho</div></div>
+      <div class="qa-btn" onclick="ativarTab('agenda')"><div class="qa-icon">📅</div><div class="qa-label">Agenda</div></div>
       <div class="qa-btn" onclick="abrirIA()"><div class="qa-icon">🤖</div><div class="qa-label">IA Voz</div></div>
     </div>
 
@@ -507,7 +512,10 @@ h1,h2,h3{font-family:'Syne',sans-serif}
 <div class="modal-overlay" id="modalAdd">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title" id="modalTitle">Novo Gasto</div>
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Novo Gasto</div>
+      <button class="modal-close-btn" onclick="document.getElementById('modalAdd').classList.remove('open')">✕</button>
+    </div>
     <!-- TRANSAÇÃO -->
     <div id="formTransacao">
       <div class="tipo-switch">
