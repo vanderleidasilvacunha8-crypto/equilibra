@@ -1032,67 +1032,158 @@ function adicionarMsgIA(texto, tipo) {
   msgs.scrollTop = msgs.scrollHeight;
 }
 
-function processarIA(texto) {
+function extrairValor(texto) {
+  // Tenta vários padrões para extrair valor monetário
+  const padroes = [
+    /(?:r\$|reais?)?\s*(\d+(?:[.,]\d+)?)\s*(?:reais?|real)?/gi,
+    /gastei\s+(?:r\$\s*)?(\d+(?:[.,]\d+)?)/i,
+    /paguei\s+(?:r\$\s*)?(\d+(?:[.,]\d+)?)/i,
+    /comprei\s+(?:por\s+)?(?:r\$\s*)?(\d+(?:[.,]\d+)?)/i,
+    /foi\s+(?:r\$\s*)?(\d+(?:[.,]\d+)?)/i,
+    /custa?(?:ou)?\s+(?:r\$\s*)?(\d+(?:[.,]\d+)?)/i,
+    /(\d+(?:[.,]\d+)?)\s*(?:reais?|real|pila|conto)/i,
+  ];
+  for (const p of padroes) {
+    const m = texto.match(p);
+    if (m) {
+      const val = parseFloat((m[1]||m[0]).replace(',','.'));
+      if (val > 0 && val < 100000) return val;
+    }
+  }
+  return null;
+}
+
+function detectarCategoria(texto) {
   const t = texto.toLowerCase();
+  if (t.match(/mercado|supermercado|arroz|feijão|feijao|leite|carne|frango|pão|pao|hortifruti|feira|comida|aliment|lanche|açougue|acougue/)) return 'alimentacao';
+  if (t.match(/gasolina|combustivel|uber|99|ônibus|onibus|passagem|metrô|metro|táxi|taxi|estacionamento|pedágio|pedagio/)) return 'transporte';
+  if (t.match(/farmácia|farmacia|remédio|remedio|médico|medico|hospital|consulta|exame|plano de saude|dentista/)) return 'saude';
+  if (t.match(/cinema|show|festa|restaurante|bar|balada|netflix|spotify|jogo|lazer|passeio|viagem/)) return 'lazer';
+  if (t.match(/curso|escola|faculdade|livro|material|educação|educacao/)) return 'educacao';
+  if (t.match(/roupa|sapato|tênis|tenis|camisa|calça|calca|vestido|loja/)) return 'vestuario';
+  if (t.match(/aluguel|condomínio|condominio|água|luz|internet|gás|gas|iptu|conta/)) return 'moradia';
+  return 'outros';
+}
+
+function detectarCategoriaGanho(texto) {
+  const t = texto.toLowerCase();
+  if (t.match(/salário|salario|pagamento|holerite/)) return 'salario';
+  if (t.match(/freelance|freela|serviço|servico|trabalho|projeto/)) return 'freelance';
+  if (t.match(/investimento|rendimento|dividendo|juros/)) return 'investimento';
+  return 'outros';
+}
+
+function processarIA(texto) {
+  const t = texto.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // remove acentos para comparação
+    .toLowerCase();
+  const textoOriginal = texto;
   const trans = getData('transacoes')||[];
   const hoje_ = hoje();
 
-  // GASTO
-  const valMatch = t.match(/r\$\s*([\d.,]+)|(\d+(?:[.,]\d+)?)\s*(?:reais|real)/i) ||
-                   t.match(/gastei\s+(\d+(?:[.,]\d+)?)|paguei\s+(\d+(?:[.,]\d+)?)/i);
-  if ((t.includes('gast') || t.includes('pagu') || t.includes('compr')) && valMatch) {
-    const val = parseFloat((valMatch[1]||valMatch[2]||valMatch[3]||valMatch[4]).replace(',','.'));
-    let cat = 'outros';
-    if (t.includes('mercado')||t.includes('supermercado')||t.includes('comida')||t.includes('aliment')||t.includes('arroz')||t.includes('feijão')||t.includes('leite')) cat='alimentacao';
-    else if (t.includes('gasolon')||t.includes('combustiv')||t.includes('uber')||t.includes('onibus')||t.includes('ônibus')) cat='transporte';
-    else if (t.includes('farmácia')||t.includes('farmacia')||t.includes('remédio')||t.includes('medico')||t.includes('médico')) cat='saude';
-    else if (t.includes('lazer')||t.includes('cinema')||t.includes('restaurante')||t.includes('bar')) cat='lazer';
-    const trans2 = getData('transacoes')||[];
-    trans2.push({id:uid(),tipo:'gasto',valor:val,descricao:texto.substring(0,40),categoria:cat,data:hoje_,criadoEm:new Date().toISOString()});
-    setData('transacoes',trans2);
-    renderHome(); renderFinancas();
-    const catNome = getCats('gasto').find(c=>c.id===cat)?.label||'Outros';
-    return `✅ Registrei um gasto de R$ ${fmt(val)} em ${catNome}. Seu saldo foi atualizado!`;
+  // ===== REGISTRAR GANHO =====
+  const isGanho = t.match(/ganhei|recebi|entrou|salario|pagamento|renda|lucro|vendi/);
+  if (isGanho) {
+    const val = extrairValor(textoOriginal);
+    if (val) {
+      const cat = detectarCategoriaGanho(t);
+      const trans2 = getData('transacoes')||[];
+      trans2.push({id:uid(),tipo:'ganho',valor:val,descricao:textoOriginal.substring(0,60),categoria:cat,data:hoje_,criadoEm:new Date().toISOString()});
+      setData('transacoes',trans2);
+      renderHome(); renderFinancas();
+      return '✅ Registrei um ganho de R$ '+fmt(val)+' ('+((getData('transacoes')||[]).find(x=>x.tipo==='ganho')?getCats('ganho').find(c=>c.id===cat)?.label||'Outros':'Outros')+'). Ótimo! 💰';
+    }
   }
 
-  // ÁGUA
-  if (t.includes('água') || t.includes('agua') || t.includes('bebi') || t.includes('hidrat')) {
-    const mlMatch = t.match(/(\d+)\s*(?:ml|mililitros?|copo?s?)/i);
-    const ml = mlMatch ? parseInt(mlMatch[1]) : 200;
+  // ===== REGISTRAR GASTO =====
+  const isGasto = t.match(/gast|pagu|compr|comprei|foi|cust|gastei|paguei|comprei|coloc|adicion|registr|anot/);
+  if (isGasto && !t.match(/quanto|total|hoje|semana|mes|mês/)) {
+    const val = extrairValor(textoOriginal);
+    if (val) {
+      const cat = detectarCategoria(t);
+      const trans2 = getData('transacoes')||[];
+      const desc = textoOriginal.substring(0,60);
+      trans2.push({id:uid(),tipo:'gasto',valor:val,descricao:desc,categoria:cat,data:hoje_,criadoEm:new Date().toISOString()});
+      setData('transacoes',trans2);
+      renderHome(); renderFinancas();
+      const catNome = getCats('gasto').find(c=>c.id===cat)?.label||'Outros';
+      return '✅ Pronto! Registrei R$ '+fmt(val)+' de gasto em '+catNome+'. Seu saldo foi atualizado! 📊';
+    }
+  }
+
+  // ===== ÁGUA =====
+  if (t.match(/agua|beb|hidrat|copo|ml/)) {
+    const mlMatch = textoOriginal.match(/(\d+)\s*(?:ml|mililitros?)/i);
+    const copoMatch = textoOriginal.match(/(\d+)\s*copo/i);
+    let ml = 200;
+    if (mlMatch) ml = parseInt(mlMatch[1]);
+    else if (copoMatch) ml = parseInt(copoMatch[1]) * 200;
     aguaAtual += ml;
     setData('agua_'+hoje_, aguaAtual);
     renderAgua();
-    return `💧 Anotei ${ml}ml de água! Você já bebeu ${aguaAtual}ml hoje. ${aguaAtual>=2000?'🎉 Meta atingida!':'Meta: 2000ml.'}`;
+    const pct = Math.round(aguaAtual/2000*100);
+    return '💧 Anotei '+ml+'ml! Total hoje: '+aguaAtual+'ml ('+pct+'% da meta). '+(aguaAtual>=2000?'🎉 Meta batida!':'');
   }
 
-  // SALDO
-  if (t.includes('saldo')||t.includes('quanto tenho')||t.includes('meu dinheiro')) {
+  // ===== SALDO / QUANTO TENHO =====
+  if (t.match(/saldo|quanto tenho|meu dinheiro|minha grana|quanto sobrou/)) {
     let g=0,gs=0;
-    trans.forEach(t=>{ if(t.tipo==='ganho')g+=t.valor; else gs+=t.valor; });
-    return `💰 Seu saldo atual é R$ ${fmt(g-gs)}. Ganhos: R$ ${fmt(g)} | Gastos: R$ ${fmt(gs)}.`;
+    trans.forEach(x=>{ if(x.tipo==='ganho')g+=x.valor; else gs+=x.valor; });
+    return '💰 Saldo atual: R$ '+fmt(g-gs)+'\nGanhos: R$ '+fmt(g)+'\nGastos: R$ '+fmt(gs);
   }
 
-  // GASTOS HOJE
-  if ((t.includes('gastei')||t.includes('gasto'))&&(t.includes('hoje')||t.includes('dia'))) {
-    const gh = trans.filter(t=>t.tipo==='gasto'&&t.data===hoje_).reduce((s,t)=>s+t.valor,0);
-    return `📊 Hoje você gastou R$ ${fmt(gh)}.`;
+  // ===== QUANTO GASTEI HOJE =====
+  if (t.match(/quanto.*gast.*hoje|gasto.*hoje|hoje.*gast/)) {
+    const gh=trans.filter(x=>x.tipo==='gasto'&&x.data===hoje_).reduce((s,x)=>s+x.valor,0);
+    const itens=trans.filter(x=>x.tipo==='gasto'&&x.data===hoje_);
+    if(!itens.length) return '📊 Você não registrou nenhum gasto hoje ainda.';
+    return '📊 Hoje você gastou R$ '+fmt(gh)+':\n'+itens.map(x=>'• R$ '+fmt(x.valor)+' — '+x.descricao).join('\n');
   }
 
-  // GASTOS MÊS
-  if ((t.includes('gastei')||t.includes('gasto'))&&(t.includes('mês')||t.includes('mes'))) {
-    const m=new Date().getMonth(), y=new Date().getFullYear();
-    const gm=trans.filter(t=>{ const d=new Date(t.data+'T00:00:00'); return t.tipo==='gasto'&&d.getMonth()===m&&d.getFullYear()===y; }).reduce((s,t)=>s+t.valor,0);
-    return `📊 Neste mês você gastou R$ ${fmt(gm)}.`;
+  // ===== QUANTO GASTEI NO MÊS =====
+  if (t.match(/quanto.*gast.*mes|gasto.*mes|mes.*gast|este mes|esse mes/)) {
+    const m=new Date().getMonth(),y=new Date().getFullYear();
+    const gm=trans.filter(x=>{ const d=new Date(x.data+'T00:00:00'); return x.tipo==='gasto'&&d.getMonth()===m&&d.getFullYear()===y; });
+    const total=gm.reduce((s,x)=>s+x.valor,0);
+    return '📊 Este mês você gastou R$ '+fmt(total)+' em '+gm.length+' transação(ões).';
   }
 
-  // COMPROMISSOS
-  if (t.includes('compromisso')||t.includes('agenda')||t.includes('reunião')||t.includes('reuniao')) {
+  // ===== COMPROMISSOS =====
+  if (t.match(/compromisso|agenda|reuniao|consulta|evento|hoje tenho/)) {
     const comps=(getData('compromissos')||[]).filter(c=>c.data===hoje_);
-    if (!comps.length) return '📅 Você não tem compromissos hoje!';
-    return `📅 Hoje você tem ${comps.length} compromisso(s):\n`+comps.map(c=>`• ${c.hora} — ${c.titulo}`).join('\n');
+    if(!comps.length) return '📅 Nenhum compromisso hoje! Aproveite o dia livre. 😊';
+    return '📅 Seus compromissos hoje:\n'+comps.map(c=>'• '+c.hora+' — '+c.titulo+(c.local?' ('+c.local+')':'')).join('\n');
   }
 
-  return '🤔 Entendi! Tente ser mais específico. Exemplos:\n• "Gastei R$ 50 no mercado"\n• "Bebi 2 copos de água"\n• "Quanto gastei hoje?"';
+  // ===== REMÉDIOS =====
+  if (t.match(/remedio|remedios|medicamento|tomar|tomei/)) {
+    const rems=getData('remedios')||[];
+    if(!rems.length) return '💊 Você não tem remédios cadastrados. Use o menu Saúde para adicionar!';
+    return '💊 Seus remédios:\n'+rems.map(r=>'• '+r.nome+' às '+r.hora+(r.dose?' — '+r.dose:'')).join('\n');
+  }
+
+  // ===== ADICIONAR COMPROMISSO VIA VOZ =====
+  const reuniaoMatch = textoOriginal.match(/(?:tenho|marque|adicione?|coloque?).*?(?:reunião|consulta|compromisso|médico|dentista|encontro).*?(?:às?|as)\s*(\d{1,2}(?::\d{2})?)/i);
+  if (reuniaoMatch) {
+    const hora = reuniaoMatch[1].includes(':') ? reuniaoMatch[1] : reuniaoMatch[1]+':00';
+    const titulo = textoOriginal.replace(/marque|adicione?|coloque?/i,'').trim();
+    const comps=getData('compromissos')||[];
+    comps.push({id:uid(),titulo:titulo.substring(0,40),data:hoje_,hora,local:'',done:false});
+    setData('compromissos',comps);
+    renderAgenda(); renderHome();
+    return '📅 Compromisso adicionado para hoje às '+hora+'!';
+  }
+
+  // ===== HUMOR =====
+  if (t.match(/estou|tô|to|me sinto|sentindo|humor/)) {
+    if (t.match(/otimo|ótimo|ótima|feliz|animado|bem|incrivel/)) { setHumor('😄'); return '😄 Que ótimo! Registrei seu humor como excelente!'; }
+    if (t.match(/bem|bom|legal|tranquil/)) { setHumor('😊'); return '😊 Registrei seu humor como bom!'; }
+    if (t.match(/cansado|cansada|cansaço|sonolento/)) { setHumor('😐'); return '😐 Entendido. Tente descansar um pouco!'; }
+    if (t.match(/triste|mal|ruim|estressado|ansioso|deprimido/)) { setHumor('😔'); return '😔 Sinto muito. Cuide-se! Beber água e respirar fundo ajuda.'; }
+  }
+
+  // ===== FALLBACK =====
+  return '🤔 Não entendi completamente. Tente assim:\n• "Gastei 50 reais no mercado"\n• "Recebi 1500 de salário"\n• "Bebi 2 copos de água"\n• "Quanto gastei hoje?"\n• "Meu saldo atual"';
 }
 
 // ===== MICROFONE =====
