@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Equilibra</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f0f4f8;--surface:#fff;--surface2:#f8fafc;
+  --primary:#0f766e;--primary-light:#14b8a6;--primary-glow:rgba(15,118,110,.15);
+  --accent:#6366f1;--accent2:#f59e0b;
+  --danger:#ef4444;--success:#22c55e;
+  --text:#0f172a;--text2:#64748b;--text3:#94a3b8;
+  --border:rgba(15,118,110,.12);
+  --card-shadow:0 2px 16px rgba(15,118,110,.08);
+  --radius:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.hidden{display:none!important}
+h1,h2,h3{font-family:'Syne',sans-serif}
+
+/* ===== SPLASH ===== */
+#splash{position:fixed;inset:0;background:linear-gradient(145deg,#0f766e,#134e4a);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;
+  transition:opacity .5s}
+#splash.fade{opacity:0;pointer-events:none}
+.splash-logo{font-family:'Syne',sans-serif;font-size:3rem;color:#fff;letter-spacing:-1px}
+.splash-logo span{color:#5eead4}
+.splash-sub{color:rgba(255,255,255,.6);font-size:.9rem;margin-top:.5rem}
+.splash-loader{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);
+  border-top-color:#5eead4;border-radius:50%;animation:spin .8s linear infinite;margin-top:2rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== LOGIN ===== */
+#loginScreen{min-height:100vh;display:flex;flex-direction:column;
+  background:linear-gradient(160deg,#0f766e 0%,#134e4a 40%,#f0f4f8 40%)}
+.login-hero{padding:3rem 1.5rem 2rem;text-align:center}
+.login-hero h1{font-size:2.2rem;color:#fff;letter-spacing:-1px}
+.login-hero h1 span{color:#5eead4}
+.login-hero p{color:rgba(255,255,255,.7);font-size:.9rem;margin-top:.4rem}
+.login-card{background:#fff;margin:0 1rem;border-radius:24px;padding:2rem 1.5rem;
+  box-shadow:0 20px 60px rgba(15,118,110,.2);flex:1}
+.tab-switch{display:flex;background:#f1f5f9;border-radius:12px;padding:3px;margin-bottom:1.5rem}
+.tab-btn{flex:1;padding:.6rem;border:none;background:transparent;border-radius:10px;
+  font-size:.875rem;font-weight:700;cursor:pointer;color:var(--text2);transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif}
+.tab-btn.active{background:#fff;color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.form-field{margin-bottom:1rem}
+.form-field label{display:block;font-size:.8rem;font-weight:700;color:var(--text2);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.5px}
+.form-field input{width:100%;padding:.8rem 1rem;border:1.5px solid #e2e8f0;border-radius:12px;
+  font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;background:#f8fafc;color:var(--text)}
+.form-field input:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px var(--primary-glow)}
+.btn-primary{width:100%;padding:.9rem;background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  border:none;border-radius:12px;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;letter-spacing:.3px}
+.btn-primary:active{transform:scale(.98)}
+.btn-google{width:100%;padding:.8rem;background:#fff;border:1.5px solid #e2e8f0;
+  border-radius:12px;color:var(--text);font-size:.9rem;font-weight:600;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:.75rem}
+.login-divider{text-align:center;color:var(--text3);font-size:.8rem;margin:.75rem 0;position:relative}
+.login-error{color:var(--danger);font-size:.82rem;text-align:center;margin-top:.5rem;display:none}
+
+/* ===== APP ===== */
+#appScreen{min-height:100vh;padding-bottom:80px}
+
+/* TOPBAR */
+.topbar{padding:1rem 1.25rem .5rem;display:flex;align-items:center;justify-content:space-between}
+.topbar-greeting{font-size:.82rem;color:var(--text2);font-weight:500}
+.topbar-name{font-size:1.1rem;font-weight:800;color:var(--text)}
+.trial-pill{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;
+  font-size:.72rem;font-weight:700;padding:.3rem .75rem;border-radius:50px;
+  display:flex;align-items:center;gap:.3rem}
+.trial-pill.urgent{background:linear-gradient(135deg,#ef4444,#dc2626)}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1rem;cursor:pointer}
+
+/* PÁGINAS */
+.page{display:none;padding:0 1rem}
+.page.active{display:block}
+
+/* CARD SALDO */
+.saldo-card{background:linear-gradient(135deg,#0f766e,#0d9488,#14b8a6);
+  border-radius:24px;padding:1.5rem;margin-bottom:1rem;position:relative;overflow:hidden}
+.saldo-card::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;
+  background:rgba(255,255,255,.08);border-radius:50%}
+.saldo-card::after{content:'';position:absolute;bottom:-40px;left:20px;width:100px;height:100px;
+  background:rgba(255,255,255,.05);border-radius:50%}
+.saldo-label{color:rgba(255,255,255,.7);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.saldo-valor{font-family:'Syne',sans-serif;font-size:2.2rem;color:#fff;margin:.25rem 0;display:flex;align-items:center;gap:.5rem}
+.saldo-hide{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:.2rem .5rem;cursor:pointer;font-size:.8rem}
+.saldo-row{display:flex;gap:.75rem;margin-top:1rem;position:relative;z-index:1}
+.saldo-mini{flex:1;background:rgba(255,255,255,.12);border-radius:12px;padding:.65rem .75rem}
+.saldo-mini-label{font-size:.7rem;color:rgba(255,255,255,.7);font-weight:600}
+.saldo-mini-val{font-size:1rem;font-weight:800;color:#fff;margin-top:.1rem}
+
+/* AÇÕES RÁPIDAS */
+.quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1rem}
+.qa-btn{background:var(--surface);border-radius:16px;padding:.85rem .5rem;text-align:center;
+  cursor:pointer;border:1.5px solid var(--border);transition:all .2s;box-shadow:var(--card-shadow)}
+.qa-btn:active{transform:scale(.95);background:var(--primary-glow)}
+.qa-icon{font-size:1.4rem;margin-bottom:.3rem}
+.qa-label{font-size:.65rem;font-weight:700;color:var(--text2)}
+
+/* CARDS SEÇÃO */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem}
+.section-title{font-size:.9rem;font-weight:800;color:var(--text)}
+.section-more{font-size:.75rem;color:var(--primary);font-weight:600;cursor:pointer}
+
+/* LISTA TRANSAÇÕES */
+.trans-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem}
+.trans-item{background:var(--surface);border-radius:14px;padding:.85rem 1rem;
+  display:flex;align-items:center;gap:.75rem;box-shadow:var(--card-shadow);border:1px solid var(--border)}
+.trans-icon{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.trans-info{flex:1}
+.trans-name{font-size:.875rem;font-weight:700;color:var(--text)}
+.trans-cat{font-size:.72rem;color:var(--text3);margin-top:.1rem}
+.trans-val{font-size:.95rem;font-weight:800}
+.trans-val.gasto{color:var(--danger)}
+.trans-val.ganho{color:var(--success)}
+
+/* COMPROMISSOS */
+.comp-item{background:var(--surface);border-radius:14px;padding:.85rem 1rem;
+  display:flex;align-items:center;gap:.75rem;box-shadow:var(--card-shadow);
+  border-left:4px solid var(--primary);margin-bottom:.5rem}
+.comp-time{font-size:.72rem;font-weight:700;color:var(--primary);min-width:42px}
+.comp-info{flex:1}
+.comp-nome{font-size:.875rem;font-weight:700}
+.comp-local{font-size:.72rem;color:var(--text3);margin-top:.1rem}
+.comp-done{width:22px;height:22px;border-radius:50%;border:2px solid #e2e8f0;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.comp-done.checked{background:var(--success);border-color:var(--success);color:#fff}
+
+/* SAÚDE */
+.health-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:1rem}
+.health-card{background:var(--surface);border-radius:16px;padding:1rem;box-shadow:var(--card-shadow);border:1px solid var(--border)}
+.health-card-title{font-size:.75rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem}
+.agua-progress{height:8px;background:#e2e8f0;border-radius:50px;overflow:hidden;margin:.5rem 0}
+.agua-bar{height:100%;background:linear-gradient(90deg,#38bdf8,#0ea5e9);border-radius:50px;transition:width .5s}
+.agua-meta{font-size:.72rem;color:var(--text3)}
+.agua-val{font-family:'Syne',sans-serif;font-size:1.4rem;color:#0ea5e9;font-weight:700}
+.btn-agua{width:100%;margin-top:.5rem;padding:.5rem;background:linear-gradient(135deg,#38bdf8,#0ea5e9);
+  border:none;border-radius:10px;color:#fff;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif}
+.humor-grid{display:flex;gap:.35rem;margin-top:.35rem}
+.humor-btn{flex:1;padding:.4rem;border-radius:10px;border:1.5px solid #e2e8f0;
+  font-size:1.2rem;cursor:pointer;background:transparent;transition:all .2s;text-align:center}
+.humor-btn.sel{border-color:var(--primary);background:var(--primary-glow)}
+.remedio-item{display:flex;align-items:center;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid #f1f5f9}
+.remedio-item:last-child{border-bottom:none}
+.remedio-nome{font-size:.8rem;font-weight:700}
+.remedio-hora{font-size:.72rem;color:var(--primary);font-weight:600}
+.remedio-check{width:20px;height:20px;border-radius:6px;border:2px solid #e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.7rem;transition:all .2s}
+.remedio-check.done{background:var(--success);border-color:var(--success);color:#fff}
+
+/* GRÁFICO FINANÇAS */
+.chart-card{background:var(--surface);border-radius:16px;padding:1rem;box-shadow:var(--card-shadow);border:1px solid var(--border);margin-bottom:1rem}
+
+/* ASSISTENTE IA */
+.ia-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.8);z-index:500;
+  flex-direction:column;justify-content:flex-end}
+.ia-overlay.open{display:flex}
+.ia-box{background:var(--surface);border-radius:24px 24px 0 0;padding:1.25rem;max-height:80vh;overflow-y:auto}
+.ia-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.ia-title{font-size:1rem;font-weight:800;display:flex;align-items:center;gap:.5rem}
+.ia-close{background:#f1f5f9;border:none;border-radius:8px;padding:.35rem .75rem;cursor:pointer;font-size:.85rem;font-family:'Plus Jakarta Sans',sans-serif}
+.ia-messages{display:flex;flex-direction:column;gap:.65rem;margin-bottom:1rem;min-height:100px}
+.ia-msg{padding:.75rem 1rem;border-radius:16px;font-size:.875rem;line-height:1.5;max-width:85%}
+.ia-msg.bot{background:linear-gradient(135deg,var(--primary-glow),#e0f2fe);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px}
+.ia-msg.user{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.ia-input-row{display:flex;gap:.5rem;align-items:center}
+.ia-input{flex:1;padding:.75rem 1rem;border:1.5px solid #e2e8f0;border-radius:14px;
+  font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none}
+.ia-input:focus{border-color:var(--primary)}
+.btn-mic{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  border:none;color:#fff;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.btn-mic.listening{animation:pulse-mic .8s ease-in-out infinite;background:linear-gradient(135deg,var(--danger),#dc2626)}
+@keyframes pulse-mic{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.btn-send{width:44px;height:44px;border-radius:14px;background:var(--accent);
+  border:none;color:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ia-suggestions{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.75rem}
+.ia-chip{padding:.35rem .75rem;background:#f1f5f9;border-radius:50px;font-size:.72rem;
+  font-weight:600;color:var(--text2);cursor:pointer;border:1px solid #e2e8f0;white-space:nowrap}
+.ia-chip:active{background:var(--primary-glow);color:var(--primary)}
+
+/* MODAL ADICIONAR */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:400;
+  align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:var(--surface);border-radius:24px 24px 0 0;padding:1.5rem;width:100%;max-height:90vh;overflow-y:auto}
+.modal-handle{width:40px;height:4px;background:#e2e8f0;border-radius:50px;margin:0 auto 1.25rem}
+.modal-title{font-size:1rem;font-weight:800;margin-bottom:1.25rem;color:var(--text)}
+.tipo-switch{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.1rem}
+.tipo-btn{padding:.7rem;border-radius:12px;border:2px solid #e2e8f0;background:transparent;
+  font-size:.875rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif}
+.tipo-btn.gasto.sel{background:#fef2f2;border-color:var(--danger);color:var(--danger)}
+.tipo-btn.ganho.sel{background:#f0fdf4;border-color:var(--success);color:var(--success)}
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:1rem}
+.cat-chip{padding:.5rem .3rem;border-radius:10px;border:1.5px solid #e2e8f0;background:transparent;
+  text-align:center;cursor:pointer;transition:all .2s;font-size:.65rem;font-weight:600;color:var(--text2)}
+.cat-chip .cat-icon{font-size:1.2rem;display:block;margin-bottom:.2rem}
+.cat-chip.sel{border-color:var(--primary);background:var(--primary-glow);color:var(--primary)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+.field{margin-bottom:.9rem}
+.field label{display:block;font-size:.78rem;font-weight:700;color:var(--text2);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.4px}
+.field input,.field select,.field textarea{width:100%;padding:.75rem .9rem;border:1.5px solid #e2e8f0;
+  border-radius:12px;font-size:.92rem;font-family:'Plus Jakarta Sans',sans-serif;
+  background:var(--surface2);color:var(--text);transition:all .2s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px var(--primary-glow)}
+.btn-salvar{width:100%;padding:.9rem;background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  border:none;border-radius:14px;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;margin-top:.5rem}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);
+  border-top:1px solid var(--border);display:flex;
+  padding:.5rem 0 calc(.5rem + env(safe-area-inset-bottom));
+  box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+.bnav{flex:1;display:flex;flex-direction:column;align-items:center;gap:.15rem;
+  cursor:pointer;color:var(--text3);font-size:.6rem;font-weight:700;padding:.3rem;transition:all .2s}
+.bnav.active{color:var(--primary)}
+.bnav-icon{font-size:1.25rem}
+.bnav-fab{flex:1;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:.3rem}
+.fab{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.6rem;
+  box-shadow:0 6px 20px rgba(15,118,110,.35);transition:all .2s}
+.fab:active{transform:scale(.93)}
+
+/* BLOQUEIO */
+#blockedScreen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:2rem;text-align:center;background:linear-gradient(160deg,#0f172a,#1e293b)}
+.blocked-icon{font-size:5rem;margin-bottom:1rem;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.blocked-title{font-size:1.8rem;color:#fff;margin-bottom:.5rem}
+.blocked-sub{color:#64748b;font-size:.9rem;line-height:1.7;max-width:300px;margin:0 auto 2rem}
+.planos{display:flex;flex-direction:column;gap:.75rem;width:100%;max-width:320px;margin-bottom:1.5rem}
+.plano-card{border-radius:16px;padding:1.2rem;border:2px solid rgba(255,255,255,.1);cursor:pointer;
+  background:rgba(255,255,255,.05);transition:all .2s;text-align:left;position:relative}
+.plano-card.sel{border-color:var(--primary-light);background:rgba(15,118,110,.2)}
+.plano-destaque{position:absolute;top:-10px;right:16px;background:var(--accent2);
+  color:#fff;font-size:.65rem;font-weight:800;padding:.2rem .6rem;border-radius:50px}
+.plano-nome{font-size:.8rem;color:rgba(255,255,255,.6);font-weight:600;text-transform:uppercase}
+.plano-preco{font-family:'Syne',sans-serif;font-size:1.5rem;color:#fff;margin:.2rem 0}
+.plano-desc{font-size:.72rem;color:rgba(255,255,255,.4)}
+.btn-pix{width:100%;max-width:320px;padding:1rem;background:linear-gradient(135deg,#25D366,#1da851);
+  border:none;border-radius:16px;color:#fff;font-size:1rem;font-weight:800;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.pix-info{margin-top:1rem;color:#64748b;font-size:.75rem}
+.pix-key{color:var(--primary-light);font-weight:700;font-size:.85rem}
+
+/* TOAST */
+.toast{position:fixed;bottom:6rem;left:50%;transform:translateX(-50%);
+  background:#0f172a;color:#fff;padding:.6rem 1.2rem;border-radius:50px;
+  font-size:.8rem;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;
+  pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+
+/* ANIMAÇÕES */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.page.active > *{animation:fadeUp .35s ease both}
+.page.active > *:nth-child(2){animation-delay:.05s}
+.page.active > *:nth-child(3){animation-delay:.1s}
+.page.active > *:nth-child(4){animation-delay:.15s}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">Equi<span>libra</span></div>
+  <div class="splash-sub">Sua vida em equilíbrio</div>
+  <div class="splash-loader"></div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="hidden">
+  <div class="login-hero">
+    <h1>Equi<span>libra</span></h1>
+    <p>Finanças • Agenda • Saúde</p>
+  </div>
+  <div class="login-card">
+    <div class="tab-switch">
+      <button class="tab-btn active" onclick="setTab('entrar')">Entrar</button>
+      <button class="tab-btn" onclick="setTab('criar')">Criar Conta</button>
+    </div>
+    <div id="tabEntrar">
+      <div class="form-field"><label>E-mail</label><input type="email" id="loginEmail" placeholder="seu@email.com"></div>
+      <div class="form-field"><label>Senha</label><input type="password" id="loginSenha" placeholder="••••••••" onkeydown="if(event.key==='Enter')entrar()"></div>
+      <button class="btn-primary" onclick="entrar()">Entrar</button>
+      <div class="login-divider">— ou —</div>
+      <button class="btn-google" onclick="entrarGoogle()">🌐 Continuar com Google</button>
+    </div>
+    <div id="tabCriar" class="hidden">
+      <div class="form-field"><label>Nome</label><input type="text" id="criarNome" placeholder="Seu nome completo"></div>
+      <div class="form-field"><label>E-mail</label><input type="email" id="criarEmail" placeholder="seu@email.com"></div>
+      <div class="form-field"><label>Senha</label><input type="password" id="criarSenha" placeholder="Mínimo 6 caracteres"></div>
+      <button class="btn-primary" onclick="criarConta()">Criar Conta Grátis</button>
+      <div class="login-divider">— ou —</div>
+      <button class="btn-google" onclick="entrarGoogle()">🌐 Continuar com Google</button>
+    </div>
+    <div id="loginError" class="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appScreen" class="hidden">
+  <div class="topbar">
+    <div>
+      <div class="topbar-greeting" id="greeting">Bom dia 👋</div>
+      <div class="topbar-name" id="userName">Carregando...</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <div class="trial-pill hidden" id="trialPill">⏳ <span id="trialDias">7</span> dias</div>
+      <div class="avatar" id="userAvatar" onclick="menuUsuario()">E</div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="page active" id="pageHome">
+    <div class="saldo-card">
+      <div class="saldo-label">Saldo atual</div>
+      <div class="saldo-valor">
+        <span id="saldoValor">R$ 0,00</span>
+        <button class="saldo-hide" onclick="toggleSaldo()">👁️</button>
+      </div>
+      <div class="saldo-row">
+        <div class="saldo-mini">
+          <div class="saldo-mini-label">↑ Ganhos</div>
+          <div class="saldo-mini-val" id="totalGanhos">R$ 0</div>
+        </div>
+        <div class="saldo-mini">
+          <div class="saldo-mini-label">↓ Gastos</div>
+          <div class="saldo-mini-val" id="totalGastos">R$ 0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <div class="qa-btn" onclick="abrirModal('gasto')"><div class="qa-icon">💸</div><div class="qa-label">Gasto</div></div>
+      <div class="qa-btn" onclick="abrirModal('ganho')"><div class="qa-icon">💰</div><div class="qa-label">Ganho</div></div>
+      <div class="qa-btn" onclick="abrirModal('compromisso')"><div class="qa-icon">📅</div><div class="qa-label">Agenda</div></div>
+      <div class="qa-btn" onclick="abrirIA()"><div class="qa-icon">🤖</div><div class="qa-label">IA Voz</div></div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Próximo compromisso</div>
+    </div>
+    <div id="proximoComp" style="margin-bottom:1rem">
+      <div style="background:var(--surface);border-radius:14px;padding:1rem;text-align:center;color:var(--text3);font-size:.85rem;border:1px dashed var(--border)">Nenhum compromisso hoje 🎉</div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Últimas transações</div>
+      <div class="section-more" onclick="ativarTab('financas')">Ver todas →</div>
+    </div>
+    <div class="trans-list" id="ultTrans">
+      <div style="text-align:center;color:var(--text3);font-size:.85rem;padding:1rem">Nenhuma transação ainda</div>
+    </div>
+  </div>
+
+  <!-- FINANÇAS -->
+  <div class="page" id="pageFinancas">
+    <div style="padding-top:.5rem">
+      <h2 style="font-size:1.3rem;margin-bottom:1rem;color:var(--text)">💰 Finanças</h2>
+      <div class="chart-card">
+        <div class="section-header"><div class="section-title">Gastos por categoria</div></div>
+        <canvas id="chartPizza" height="200"></canvas>
+      </div>
+      <div class="section-header">
+        <div class="section-title">Histórico</div>
+        <select id="filtroMes" onchange="renderFinancas()" style="font-size:.8rem;border:1px solid #e2e8f0;border-radius:8px;padding:.3rem .5rem;font-family:'Plus Jakarta Sans',sans-serif">
+          <option value="hoje">Hoje</option>
+          <option value="semana">Esta semana</option>
+          <option value="mes" selected>Este mês</option>
+        </select>
+      </div>
+      <div class="trans-list" id="listaTrans"></div>
+    </div>
+  </div>
+
+  <!-- AGENDA -->
+  <div class="page" id="pageAgenda">
+    <div style="padding-top:.5rem">
+      <h2 style="font-size:1.3rem;margin-bottom:1rem">📅 Agenda</h2>
+      <div class="section-header">
+        <div class="section-title">Hoje — <span id="dataHoje" style="color:var(--primary)"></span></div>
+        <div class="section-more" onclick="abrirModal('compromisso')">+ Adicionar</div>
+      </div>
+      <div id="listaComp">
+        <div style="text-align:center;color:var(--text3);font-size:.85rem;padding:2rem">Sem compromissos hoje 🌟</div>
+      </div>
+      <div class="section-header" style="margin-top:1rem">
+        <div class="section-title">✅ Tarefas do dia</div>
+        <div class="section-more" onclick="abrirModal('tarefa')">+ Adicionar</div>
+      </div>
+      <div id="listaTarefas">
+        <div style="text-align:center;color:var(--text3);font-size:.85rem;padding:1rem">Nenhuma tarefa ainda</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAÚDE -->
+  <div class="page" id="pageSaude">
+    <div style="padding-top:.5rem">
+      <h2 style="font-size:1.3rem;margin-bottom:1rem">🍏 Saúde</h2>
+      <div class="health-grid">
+        <div class="health-card" style="grid-column:1/-1">
+          <div class="health-card-title">💧 Hidratação</div>
+          <div class="agua-val" id="aguaVal">0 ml</div>
+          <div class="agua-progress"><div class="agua-bar" id="aguaBar" style="width:0%"></div></div>
+          <div class="agua-meta">Meta: <span id="aguaMeta">2000</span> ml</div>
+          <div style="display:flex;gap:.5rem;margin-top:.5rem">
+            <button class="btn-agua" onclick="adicionarAgua(200)">+200ml</button>
+            <button class="btn-agua" onclick="adicionarAgua(300)">+300ml</button>
+            <button class="btn-agua" onclick="adicionarAgua(500)">+500ml</button>
+          </div>
+        </div>
+        <div class="health-card">
+          <div class="health-card-title">😊 Humor</div>
+          <div class="humor-grid">
+            <button class="humor-btn" onclick="setHumor('😄')" id="h1">😄</button>
+            <button class="humor-btn" onclick="setHumor('😊')" id="h2">😊</button>
+            <button class="humor-btn" onclick="setHumor('😐')" id="h3">😐</button>
+            <button class="humor-btn" onclick="setHumor('😔')" id="h4">😔</button>
+          </div>
+        </div>
+        <div class="health-card">
+          <div class="health-card-title">😴 Sono</div>
+          <div class="field" style="margin:0">
+            <input type="number" id="sonoHoras" placeholder="Horas" min="0" max="24" style="width:100%;padding:.5rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif" onchange="salvarSono()">
+          </div>
+          <div style="font-size:.7rem;color:var(--text3);margin-top:.3rem">Horas dormidas</div>
+        </div>
+      </div>
+      <div class="section-header">
+        <div class="section-title">💊 Remédios</div>
+        <div class="section-more" onclick="abrirModal('remedio')">+ Adicionar</div>
+      </div>
+      <div class="health-card" style="margin-bottom:1rem">
+        <div id="listaRemedios">
+          <div style="text-align:center;color:var(--text3);font-size:.82rem;padding:.75rem">Nenhum remédio cadastrado</div>
+        </div>
+      </div>
+      <div class="section-header">
+        <div class="section-title">🏃 Exercitei hoje?</div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-bottom:1rem">
+        <button onclick="setExercicio('sim')" id="exSim" style="flex:1;padding:.65rem;border-radius:12px;border:2px solid #e2e8f0;background:transparent;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">✅ Sim</button>
+        <button onclick="setExercicio('nao')" id="exNao" style="flex:1;padding:.65rem;border-radius:12px;border:2px solid #e2e8f0;background:transparent;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">❌ Não</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="bnav active" id="bnav-home" onclick="ativarTab('home')">
+      <div class="bnav-icon">🏠</div><span>Início</span>
+    </div>
+    <div class="bnav" id="bnav-financas" onclick="ativarTab('financas')">
+      <div class="bnav-icon">💰</div><span>Finanças</span>
+    </div>
+    <div class="bnav-fab" onclick="abrirModal('gasto')">
+      <div class="fab">+</div>
+    </div>
+    <div class="bnav" id="bnav-agenda" onclick="ativarTab('agenda')">
+      <div class="bnav-icon">📅</div><span>Agenda</span>
+    </div>
+    <div class="bnav" id="bnav-saude" onclick="ativarTab('saude')">
+      <div class="bnav-icon">🍏</div><span>Saúde</span>
+    </div>
+  </div>
+</div>
+
+<!-- BLOQUEIO -->
+<div id="blockedScreen" class="hidden">
+  <div class="blocked-icon">🔒</div>
+  <h2 class="blocked-title">Teste encerrado</h2>
+  <p class="blocked-sub">Seus 7 dias de teste chegaram ao fim! Seus dados estão salvos e seguros. Assine agora para continuar com tudo organizado.</p>
+  <div class="planos">
+    <div class="plano-card sel" id="planoMensal" onclick="selPlano('mensal')">
+      <div class="plano-nome">Plano Mensal</div>
+      <div class="plano-preco">R$ 14,90<span style="font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;color:rgba(255,255,255,.5)">/mês</span></div>
+      <div class="plano-desc">Acesso completo por 30 dias</div>
+    </div>
+    <div class="plano-card" id="planoAnual" onclick="selPlano('anual')">
+      <div class="plano-destaque">💎 MELHOR OPÇÃO</div>
+      <div class="plano-nome">Plano Anual</div>
+      <div class="plano-preco">R$ 99,90<span style="font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;color:rgba(255,255,255,.5)">/ano</span></div>
+      <div class="plano-desc">Economia de R$ 78,90 — menos de R$ 8,50/mês</div>
+    </div>
+  </div>
+  <button class="btn-pix" onclick="irWhatsApp()">📱 Enviar comprovante no WhatsApp</button>
+  <div class="pix-info">
+    Chave Pix: <span class="pix-key">31982773961</span><br>
+    <span style="font-size:.7rem">Após o pagamento, envie o comprovante e libero seu acesso na hora!</span>
+  </div>
+</div>
+
+<!-- MODAL ADICIONAR -->
+<div class="modal-overlay" id="modalAdd">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">Novo Gasto</div>
+    <!-- TRANSAÇÃO -->
+    <div id="formTransacao">
+      <div class="tipo-switch">
+        <button class="tipo-btn gasto sel" id="tipoGasto" onclick="setTipo('gasto')">💸 Gasto</button>
+        <button class="tipo-btn ganho" id="tipoGanho" onclick="setTipo('ganho')">💰 Ganho</button>
+      </div>
+      <div class="field"><label>Valor (R$)</label><input type="number" id="tValor" placeholder="0,00" step="0.01"></div>
+      <div class="field"><label>Descrição</label><input type="text" id="tDesc" placeholder="Ex: Supermercado"></div>
+      <div class="field"><label>Categoria</label>
+        <div class="cat-grid" id="catGrid"></div>
+      </div>
+      <div class="field"><label>Data</label><input type="date" id="tData"></div>
+      <button class="btn-salvar" onclick="salvarTransacao()">✓ Salvar</button>
+    </div>
+    <!-- COMPROMISSO -->
+    <div id="formCompromisso" class="hidden">
+      <div class="field"><label>Título</label><input type="text" id="cTitulo" placeholder="Ex: Consulta médica"></div>
+      <div class="field-row">
+        <div class="field"><label>Data</label><input type="date" id="cData"></div>
+        <div class="field"><label>Hora</label><input type="time" id="cHora"></div>
+      </div>
+      <div class="field"><label>Local (opcional)</label><input type="text" id="cLocal" placeholder="Ex: Hospital X"></div>
+      <button class="btn-salvar" onclick="salvarCompromisso()">✓ Salvar</button>
+    </div>
+    <!-- TAREFA -->
+    <div id="formTarefa" class="hidden">
+      <div class="field"><label>Tarefa</label><input type="text" id="tarDesc" placeholder="Ex: Pagar conta de luz"></div>
+      <button class="btn-salvar" onclick="salvarTarefa()">✓ Salvar</button>
+    </div>
+    <!-- REMÉDIO -->
+    <div id="formRemedio" class="hidden">
+      <div class="field"><label>Nome do remédio</label><input type="text" id="remNome" placeholder="Ex: Vitamina C"></div>
+      <div class="field"><label>Horário</label><input type="time" id="remHora"></div>
+      <div class="field"><label>Dosagem (opcional)</label><input type="text" id="remDose" placeholder="Ex: 1 comprimido"></div>
+      <button class="btn-salvar" onclick="salvarRemedio()">✓ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ASSISTENTE IA -->
+<div class="ia-overlay" id="iaOverlay">
+  <div class="ia-box">
+    <div class="ia-header">
+      <div class="ia-title">🤖 Assistente Equilibra</div>
+      <button class="ia-close" onclick="fecharIA()">✕ Fechar</button>
+    </div>
+    <div class="ia-suggestions">
+      <div class="ia-chip" onclick="enviarIA('Quanto gastei hoje?')">Quanto gastei hoje?</div>
+      <div class="ia-chip" onclick="enviarIA('Adicionar gasto de R$ 50 em alimentação')">Adicionar gasto</div>
+      <div class="ia-chip" onclick="enviarIA('Bebi 300ml de água')">Registrar água</div>
+      <div class="ia-chip" onclick="enviarIA('Qual meu saldo atual?')">Ver saldo</div>
+      <div class="ia-chip" onclick="enviarIA('Meus compromissos de hoje')">Compromissos</div>
+    </div>
+    <div class="ia-messages" id="iaMsgs">
+      <div class="ia-msg bot">👋 Olá! Sou seu assistente pessoal. Pode falar comigo ou digitar o que precisa. Exemplos:<br><br>
+      • "Gastei R$ 50 no mercado hoje"<br>• "Quanto gastei esta semana?"<br>• "Bebi 2 copos de água"<br>• "Tenho reunião às 15h amanhã"</div>
+    </div>
+    <div class="ia-input-row">
+      <input class="ia-input" id="iaInput" placeholder="Digite ou use o microfone..." onkeydown="if(event.key==='Enter')enviarIA()">
+      <button class="btn-mic" id="btnMic" onclick="toggleMic()">🎙️</button>
+      <button class="btn-send" onclick="enviarIA()">➤</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== CONFIG =====
+const WHATSAPP = '5531989892315';
+const PIX = '31982773961';
+const TRIAL_DIAS = 7;
+
+// ===== ESTADO =====
+let usuario = null;
+let saldoVisivel = true;
+let planoSel = 'mensal';
+let tipoTrans = 'gasto';
+let aguaAtual = 0;
+let chartPizza = null;
+let recognition = null;
+let micAtivo = false;
+
+// ===== DADOS (localStorage) =====
+function getData(key){ try{ return JSON.parse(localStorage.getItem('eq_'+key)||'null'); }catch(e){ return null; } }
+function setData(key,val){ localStorage.setItem('eq_'+key, JSON.stringify(val)); }
+
+// ===== SPLASH =====
+setTimeout(() => {
+  document.getElementById('splash').classList.add('fade');
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('hidden');
+    inicializar();
+  }, 500);
+}, 1500);
+
+function inicializar() {
+  const u = getData('usuario');
+  if (u) {
+    usuario = u;
+    verificarAcesso();
+  } else {
+    document.getElementById('loginScreen').classList.remove('hidden');
+  }
+}
+
+// ===== LOGIN =====
+window.setTab = function(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tabEntrar').classList.toggle('hidden', tab !== 'entrar');
+  document.getElementById('tabCriar').classList.toggle('hidden', tab !== 'criar');
+};
+
+window.entrar = function() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  const err = document.getElementById('loginError');
+  if (!email || !senha) { err.textContent = '❌ Preencha e-mail e senha'; err.style.display='block'; return; }
+  const u = getData('usuario');
+  if (u && u.email === email && u.senha === senha) {
+    usuario = u; verificarAcesso();
+  } else {
+    err.textContent = '❌ E-mail ou senha incorretos'; err.style.display='block';
+  }
+};
+
+window.criarConta = function() {
+  const nome = document.getElementById('criarNome').value.trim();
+  const email = document.getElementById('criarEmail').value.trim();
+  const senha = document.getElementById('criarSenha').value;
+  const err = document.getElementById('loginError');
+  if (!nome||!email||!senha) { err.textContent='❌ Preencha todos os campos'; err.style.display='block'; return; }
+  if (senha.length < 6) { err.textContent='❌ Senha mínima: 6 caracteres'; err.style.display='block'; return; }
+  const novoU = { nome, email, senha, criadoEm: new Date().toISOString(), ativo: false };
+  setData('usuario', novoU);
+  setData('transacoes', []);
+  setData('compromissos', []);
+  setData('tarefas', []);
+  setData('remedios', []);
+  usuario = novoU;
+  verificarAcesso();
+};
+
+window.entrarGoogle = function() {
+  const nome = 'Usuário Google';
+  const email = 'usuario@gmail.com';
+  const u = getData('usuario');
+  if (u && u.email === email) { usuario = u; verificarAcesso(); return; }
+  const novoU = { nome, email, senha:'google', criadoEm: new Date().toISOString(), ativo: false };
+  setData('usuario', novoU);
+  usuario = novoU;
+  verificarAcesso();
+};
+
+// ===== VERIFICAR ACESSO =====
+function verificarAcesso() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  // Verificar se está ativo (desbloqueado pelo admin)
+  if (usuario.ativo) {
+    mostrarApp();
+    return;
+  }
+  // Verificar trial
+  const criado = new Date(usuario.criadoEm);
+  const agora = new Date();
+  const diasPassados = Math.floor((agora - criado) / (1000*60*60*24));
+  const diasRestantes = TRIAL_DIAS - diasPassados;
+  if (diasRestantes > 0) {
+    mostrarApp(diasRestantes);
+  } else {
+    document.getElementById('blockedScreen').classList.remove('hidden');
+  }
+}
+
+// ===== MOSTRAR APP =====
+function mostrarApp(diasTrial) {
+  document.getElementById('appScreen').classList.remove('hidden');
+  // Saudação
+  const h = new Date().getHours();
+  const saud = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+  document.getElementById('greeting').textContent = saud + ' 👋';
+  document.getElementById('userName').textContent = usuario.nome.split(' ')[0];
+  document.getElementById('userAvatar').textContent = usuario.nome[0].toUpperCase();
+  // Trial pill
+  if (diasTrial) {
+    const pill = document.getElementById('trialPill');
+    pill.classList.remove('hidden');
+    document.getElementById('trialDias').textContent = diasTrial;
+    if (diasTrial <= 2) pill.classList.add('urgent');
+  }
+  // Data
+  document.getElementById('dataHoje').textContent = new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  // Água
+  aguaAtual = getData('agua_'+hoje()) || 0;
+  renderAgua();
+  // Renderizar tudo
+  renderHome();
+  renderFinancas();
+  renderAgenda();
+  renderRemedios();
+}
+
+// ===== TABS =====
+window.ativarTab = function(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.bnav').forEach(b => b.classList.remove('active'));
+  const pageMap = {home:'pageHome',financas:'pageFinancas',agenda:'pageAgenda',saude:'pageSaude'};
+  if (pageMap[tab]) document.getElementById(pageMap[tab]).classList.add('active');
+  const btn = document.getElementById('bnav-'+tab);
+  if (btn) btn.classList.add('active');
+  window.scrollTo(0,0);
+  if (tab === 'financas') renderFinancas();
+  if (tab === 'agenda') renderAgenda();
+};
+
+// ===== HOME =====
+function renderHome() {
+  const trans = getData('transacoes') || [];
+  const hoje_ = hoje();
+  let ganhos=0, gastos=0;
+  trans.forEach(t => { if(t.tipo==='ganho') ganhos+=t.valor; else gastos+=t.valor; });
+  const saldo = ganhos - gastos;
+  document.getElementById('saldoValor').textContent = saldoVisivel ? 'R$ '+fmt(saldo) : 'R$ ••••••';
+  document.getElementById('totalGanhos').textContent = 'R$ '+fmt(ganhos);
+  document.getElementById('totalGastos').textContent = 'R$ '+fmt(gastos);
+  // Últimas 3 transações
+  const ult = [...trans].reverse().slice(0,3);
+  const tbl = document.getElementById('ultTrans');
+  tbl.innerHTML = ult.length ? ult.map(t => transHTML(t)).join('') :
+    '<div style="text-align:center;color:var(--text3);font-size:.85rem;padding:1rem">Nenhuma transação ainda 💡</div>';
+  // Próximo compromisso
+  const comps = (getData('compromissos')||[]).filter(c=>c.data===hoje_).sort((a,b)=>a.hora.localeCompare(b.hora));
+  const pComp = document.getElementById('proximoComp');
+  if (comps.length) {
+    const c = comps[0];
+    pComp.innerHTML = `<div class="comp-item"><div class="comp-time">${c.hora}</div><div class="comp-info"><div class="comp-nome">${c.titulo}</div>${c.local?`<div class="comp-local">📍 ${c.local}</div>`:''}</div></div>`;
+  } else {
+    pComp.innerHTML = '<div style="background:var(--surface);border-radius:14px;padding:1rem;text-align:center;color:var(--text3);font-size:.85rem;border:1px dashed var(--border)">Nenhum compromisso hoje 🎉</div>';
+  }
+}
+
+function transHTML(t) {
+  const cats = getCats();
+  const cat = cats.find(c=>c.id===t.categoria) || {icon:'💳',label:'Outros'};
+  return `<div class="trans-item">
+    <div class="trans-icon" style="background:${t.tipo==='ganho'?'#f0fdf4':'#fef2f2'}">${cat.icon}</div>
+    <div class="trans-info"><div class="trans-name">${t.descricao||cat.label}</div><div class="trans-cat">${cat.label} • ${formatDate(t.data)}</div></div>
+    <div class="trans-val ${t.tipo}">${t.tipo==='ganho'?'+':'-'} R$ ${fmt(t.valor)}</div>
+  </div>`;
+}
+
+window.toggleSaldo = function() {
+  saldoVisivel = !saldoVisivel; renderHome();
+};
+
+// ===== FINANÇAS =====
+function renderFinancas() {
+  const trans = getData('transacoes') || [];
+  const filtro = document.getElementById('filtroMes')?.value || 'mes';
+  const hoje_ = new Date(); hoje_.setHours(0,0,0,0);
+  let lista = trans.filter(t => {
+    const d = new Date(t.data+'T00:00:00');
+    if (filtro==='hoje') return t.data===hoje();
+    if (filtro==='semana') { const s=new Date(hoje_); s.setDate(s.getDate()-7); return d>=s; }
+    return d.getMonth()===hoje_.getMonth() && d.getFullYear()===hoje_.getFullYear();
+  });
+  document.getElementById('listaTrans').innerHTML = lista.length
+    ? [...lista].reverse().map(transHTML).join('')
+    : '<div style="text-align:center;color:var(--text3);font-size:.85rem;padding:2rem">Nenhuma transação no período</div>';
+  // Gráfico pizza
+  renderChartPizza(lista.filter(t=>t.tipo==='gasto'));
+}
+
+function renderChartPizza(gastos) {
+  const canvas = document.getElementById('chartPizza');
+  if (!canvas) return;
+  const cats = getCats();
+  const porCat = {};
+  gastos.forEach(t => {
+    const c = t.categoria||'outros';
+    porCat[c] = (porCat[c]||0) + t.valor;
+  });
+  const labels = Object.keys(porCat).map(k => (cats.find(c=>c.id===k)||{label:k}).label);
+  const data = Object.values(porCat);
+  const colors = ['#0f766e','#14b8a6','#6366f1','#f59e0b','#ef4444','#22c55e','#8b5cf6','#ec4899'];
+  if (chartPizza) chartPizza.destroy();
+  if (!data.length) { canvas.style.display='none'; return; }
+  canvas.style.display='block';
+  chartPizza = new Chart(canvas, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:0 }] },
+    options:{ responsive:true, plugins:{ legend:{ position:'bottom', labels:{ font:{size:11}, padding:12 } } } }
+  });
+}
+
+// ===== AGENDA =====
+function renderAgenda() {
+  const hoje_ = hoje();
+  const comps = (getData('compromissos')||[]).filter(c=>c.data===hoje_).sort((a,b)=>a.hora.localeCompare(b.hora));
+  document.getElementById('listaComp').innerHTML = comps.length
+    ? comps.map(c=>`<div class="comp-item">
+        <div class="comp-time">${c.hora}</div>
+        <div class="comp-info"><div class="comp-nome">${c.titulo}</div>${c.local?`<div class="comp-local">📍 ${c.local}</div>`:''}</div>
+        <div class="comp-done ${c.done?'checked':''}" onclick="toggleComp('${c.id}')">${c.done?'✓':''}</div>
+      </div>`).join('')
+    : '<div style="text-align:center;color:var(--text3);font-size:.85rem;padding:2rem">Sem compromissos hoje 🌟</div>';
+  // Tarefas
+  const tarefas = getData('tarefas') || [];
+  document.getElementById('listaTarefas').innerHTML = tarefas.length
+    ? tarefas.map(t=>`<div style="display:flex;align-items:center;gap:.75rem;background:var(--surface);border-radius:12px;padding:.75rem 1rem;margin-bottom:.5rem;border:1px solid var(--border);box-shadow:var(--card-shadow)">
+        <div style="width:22px;height:22px;border-radius:6px;border:2px solid ${t.done?'var(--success)':'#e2e8f0'};background:${t.done?'var(--success)':'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:.7rem;flex-shrink:0" onclick="toggleTarefa('${t.id}')">${t.done?'✓':''}</div>
+        <div style="font-size:.875rem;font-weight:600;text-decoration:${t.done?'line-through':'none'};color:${t.done?'var(--text3)':'var(--text)'}">${t.desc}</div>
+      </div>`).join('')
+    : '<div style="text-align:center;color:var(--text3);font-size:.85rem;padding:1rem">Nenhuma tarefa ainda</div>';
+}
+
+window.toggleComp = function(id) {
+  const comps = getData('compromissos')||[];
+  const idx = comps.findIndex(c=>c.id===id);
+  if (idx>=0) { comps[idx].done=!comps[idx].done; setData('compromissos',comps); renderAgenda(); renderHome(); }
+};
+window.toggleTarefa = function(id) {
+  const tarefas = getData('tarefas')||[];
+  const idx = tarefas.findIndex(t=>t.id===id);
+  if (idx>=0) { tarefas[idx].done=!tarefas[idx].done; setData('tarefas',tarefas); renderAgenda(); }
+};
+
+// ===== SAÚDE =====
+function renderAgua() {
+  const meta = 2000;
+  document.getElementById('aguaVal').textContent = aguaAtual + ' ml';
+  document.getElementById('aguaBar').style.width = Math.min(100,aguaAtual/meta*100)+'%';
+}
+window.adicionarAgua = function(ml) {
+  aguaAtual += ml;
+  setData('agua_'+hoje(), aguaAtual);
+  renderAgua();
+  showToast('💧 +'+ml+'ml registrado! Total: '+aguaAtual+'ml');
+};
+window.setHumor = function(emoji) {
+  ['h1','h2','h3','h4'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  const mapa={'😄':'h1','😊':'h2','😐':'h3','😔':'h4'};
+  if(mapa[emoji]) document.getElementById(mapa[emoji]).classList.add('sel');
+  setData('humor_'+hoje(), emoji);
+  showToast('Humor registrado! '+emoji);
+};
+window.salvarSono = function() {
+  const h = document.getElementById('sonoHoras').value;
+  setData('sono_'+hoje(), h);
+  showToast('😴 '+h+'h de sono registradas!');
+};
+window.setExercicio = function(val) {
+  setData('exercicio_'+hoje(), val);
+  document.getElementById('exSim').style.background = val==='sim'?'#f0fdf4':'transparent';
+  document.getElementById('exSim').style.borderColor = val==='sim'?'var(--success)':'#e2e8f0';
+  document.getElementById('exNao').style.background = val==='nao'?'#fef2f2':'transparent';
+  document.getElementById('exNao').style.borderColor = val==='nao'?'var(--danger)':'#e2e8f0';
+  showToast(val==='sim'?'💪 Parabéns pelo exercício!':'Tudo bem, amanhã é outro dia! 😊');
+};
+
+function renderRemedios() {
+  const remedios = getData('remedios') || [];
+  const hoje_ = hoje();
+  document.getElementById('listaRemedios').innerHTML = remedios.length
+    ? remedios.map(r=>`<div class="remedio-item">
+        <div><div class="remedio-nome">${r.nome}</div>${r.dose?`<div style="font-size:.7rem;color:var(--text3)">${r.dose}</div>`:''}</div>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <div class="remedio-hora">${r.hora}</div>
+          <div class="remedio-check ${(getData('rem_'+r.id+'_'+hoje_))?'done':''}" onclick="toggleRemedio('${r.id}')">${(getData('rem_'+r.id+'_'+hoje_))?'✓':''}</div>
+        </div>
+      </div>`).join('')
+    : '<div style="text-align:center;color:var(--text3);font-size:.82rem;padding:.75rem">Nenhum remédio cadastrado</div>';
+}
+window.toggleRemedio = function(id) {
+  const key = 'rem_'+id+'_'+hoje();
+  setData(key, !getData(key));
+  renderRemedios();
+  showToast(getData(key)?'💊 Remédio tomado!':'Remédio desmarcado');
+};
+
+// ===== MODAL =====
+const CATEGORIAS_GASTO = [
+  {id:'alimentacao',icon:'🍔',label:'Alimentação'},
+  {id:'transporte',icon:'🚗',label:'Transporte'},
+  {id:'moradia',icon:'🏠',label:'Moradia'},
+  {id:'saude',icon:'💊',label:'Saúde'},
+  {id:'lazer',icon:'🎬',label:'Lazer'},
+  {id:'educacao',icon:'📚',label:'Educação'},
+  {id:'vestuario',icon:'👕',label:'Roupa'},
+  {id:'outros',icon:'💳',label:'Outros'},
+];
+const CATEGORIAS_GANHO = [
+  {id:'salario',icon:'💼',label:'Salário'},
+  {id:'freelance',icon:'💻',label:'Freelance'},
+  {id:'investimento',icon:'📈',label:'Investimento'},
+  {id:'outros',icon:'💰',label:'Outros'},
+];
+function getCats(tipo){ return (tipo||tipoTrans)==='ganho'?CATEGORIAS_GANHO:CATEGORIAS_GASTO; }
+
+let catSel = 'outros';
+function renderCats() {
+  const cats = getCats();
+  catSel = cats[0].id;
+  document.getElementById('catGrid').innerHTML = cats.map(c=>
+    `<div class="cat-chip ${c.id===catSel?'sel':''}" onclick="selCat('${c.id}')"><span class="cat-icon">${c.icon}</span>${c.label}</div>`
+  ).join('');
+}
+window.selCat = function(id) {
+  catSel=id;
+  document.querySelectorAll('.cat-chip').forEach(c=>{c.classList.remove('sel');if(c.onclick.toString().includes("'"+id+"'"))c.classList.add('sel');});
+  renderCats();
+  document.querySelectorAll('.cat-chip').forEach(c=>{if(c.onclick.toString().includes("'"+id+"'"))c.classList.add('sel');});
+};
+
+window.abrirModal = function(tipo) {
+  document.getElementById('modalAdd').classList.add('open');
+  ['formTransacao','formCompromisso','formTarefa','formRemedio'].forEach(f=>document.getElementById(f).classList.add('hidden'));
+  const hoje_ = hoje();
+  if (tipo==='gasto'||tipo==='ganho') {
+    document.getElementById('formTransacao').classList.remove('hidden');
+    document.getElementById('modalTitle').textContent = tipo==='gasto'?'Novo Gasto':'Novo Ganho';
+    setTipo(tipo);
+    document.getElementById('tData').value = hoje_;
+    document.getElementById('tValor').value='';
+    document.getElementById('tDesc').value='';
+  } else if (tipo==='compromisso') {
+    document.getElementById('formCompromisso').classList.remove('hidden');
+    document.getElementById('modalTitle').textContent='Novo Compromisso';
+    document.getElementById('cData').value=hoje_;
+    document.getElementById('cTitulo').value='';
+    document.getElementById('cHora').value='';
+    document.getElementById('cLocal').value='';
+  } else if (tipo==='tarefa') {
+    document.getElementById('formTarefa').classList.remove('hidden');
+    document.getElementById('modalTitle').textContent='Nova Tarefa';
+    document.getElementById('tarDesc').value='';
+  } else if (tipo==='remedio') {
+    document.getElementById('formRemedio').classList.remove('hidden');
+    document.getElementById('modalTitle').textContent='Novo Remédio';
+    document.getElementById('remNome').value='';
+    document.getElementById('remHora').value='';
+    document.getElementById('remDose').value='';
+  }
+};
+
+document.getElementById('modalAdd').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
+
+window.setTipo = function(tipo) {
+  tipoTrans = tipo;
+  document.getElementById('tipoGasto').classList.toggle('sel', tipo==='gasto');
+  document.getElementById('tipoGanho').classList.toggle('sel', tipo==='ganho');
+  renderCats();
+};
+
+window.salvarTransacao = function() {
+  const val = parseFloat(document.getElementById('tValor').value);
+  const desc = document.getElementById('tDesc').value.trim();
+  const data = document.getElementById('tData').value;
+  if (!val||val<=0) { showToast('❌ Digite um valor válido'); return; }
+  const trans = getData('transacoes')||[];
+  trans.push({ id:uid(), tipo:tipoTrans, valor:val, descricao:desc, categoria:catSel, data, criadoEm:new Date().toISOString() });
+  setData('transacoes', trans);
+  document.getElementById('modalAdd').classList.remove('open');
+  renderHome(); renderFinancas();
+  showToast(tipoTrans==='gasto'?'💸 Gasto registrado!':'💰 Ganho registrado!');
+};
+
+window.salvarCompromisso = function() {
+  const titulo = document.getElementById('cTitulo').value.trim();
+  const data = document.getElementById('cData').value;
+  const hora = document.getElementById('cHora').value;
+  const local = document.getElementById('cLocal').value.trim();
+  if (!titulo) { showToast('❌ Digite o título'); return; }
+  const comps = getData('compromissos')||[];
+  comps.push({ id:uid(), titulo, data, hora:hora||'00:00', local, done:false });
+  setData('compromissos', comps);
+  document.getElementById('modalAdd').classList.remove('open');
+  renderAgenda(); renderHome();
+  showToast('📅 Compromisso adicionado!');
+};
+
+window.salvarTarefa = function() {
+  const desc = document.getElementById('tarDesc').value.trim();
+  if (!desc) { showToast('❌ Digite a tarefa'); return; }
+  const tarefas = getData('tarefas')||[];
+  tarefas.push({ id:uid(), desc, done:false });
+  setData('tarefas', tarefas);
+  document.getElementById('modalAdd').classList.remove('open');
+  renderAgenda();
+  showToast('✅ Tarefa adicionada!');
+};
+
+window.salvarRemedio = function() {
+  const nome = document.getElementById('remNome').value.trim();
+  const hora = document.getElementById('remHora').value;
+  const dose = document.getElementById('remDose').value.trim();
+  if (!nome) { showToast('❌ Digite o nome'); return; }
+  const remedios = getData('remedios')||[];
+  remedios.push({ id:uid(), nome, hora:hora||'08:00', dose });
+  setData('remedios', remedios);
+  document.getElementById('modalAdd').classList.remove('open');
+  renderRemedios();
+  showToast('💊 Remédio cadastrado!');
+};
+
+// ===== ASSISTENTE IA =====
+window.abrirIA = function() { document.getElementById('iaOverlay').classList.add('open'); };
+window.fecharIA = function() { document.getElementById('iaOverlay').classList.remove('open'); stopMic(); };
+document.getElementById('iaOverlay').addEventListener('click', function(e){ if(e.target===this) fecharIA(); });
+
+window.enviarIA = function(textoFixo) {
+  const input = document.getElementById('iaInput');
+  const texto = textoFixo || input.value.trim();
+  if (!texto) return;
+  adicionarMsgIA(texto, 'user');
+  input.value = '';
+  setTimeout(() => {
+    const resp = processarIA(texto);
+    adicionarMsgIA(resp, 'bot');
+  }, 600);
+};
+
+function adicionarMsgIA(texto, tipo) {
+  const msgs = document.getElementById('iaMsgs');
+  const div = document.createElement('div');
+  div.className = 'ia-msg ' + tipo;
+  div.textContent = texto;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function processarIA(texto) {
+  const t = texto.toLowerCase();
+  const trans = getData('transacoes')||[];
+  const hoje_ = hoje();
+
+  // GASTO
+  const valMatch = t.match(/r\$\s*([\d.,]+)|(\d+(?:[.,]\d+)?)\s*(?:reais|real)/i) ||
+                   t.match(/gastei\s+(\d+(?:[.,]\d+)?)|paguei\s+(\d+(?:[.,]\d+)?)/i);
+  if ((t.includes('gast') || t.includes('pagu') || t.includes('compr')) && valMatch) {
+    const val = parseFloat((valMatch[1]||valMatch[2]||valMatch[3]||valMatch[4]).replace(',','.'));
+    let cat = 'outros';
+    if (t.includes('mercado')||t.includes('supermercado')||t.includes('comida')||t.includes('aliment')||t.includes('arroz')||t.includes('feijão')||t.includes('leite')) cat='alimentacao';
+    else if (t.includes('gasolon')||t.includes('combustiv')||t.includes('uber')||t.includes('onibus')||t.includes('ônibus')) cat='transporte';
+    else if (t.includes('farmácia')||t.includes('farmacia')||t.includes('remédio')||t.includes('medico')||t.includes('médico')) cat='saude';
+    else if (t.includes('lazer')||t.includes('cinema')||t.includes('restaurante')||t.includes('bar')) cat='lazer';
+    const trans2 = getData('transacoes')||[];
+    trans2.push({id:uid(),tipo:'gasto',valor:val,descricao:texto.substring(0,40),categoria:cat,data:hoje_,criadoEm:new Date().toISOString()});
+    setData('transacoes',trans2);
+    renderHome(); renderFinancas();
+    const catNome = getCats('gasto').find(c=>c.id===cat)?.label||'Outros';
+    return `✅ Registrei um gasto de R$ ${fmt(val)} em ${catNome}. Seu saldo foi atualizado!`;
+  }
+
+  // ÁGUA
+  if (t.includes('água') || t.includes('agua') || t.includes('bebi') || t.includes('hidrat')) {
+    const mlMatch = t.match(/(\d+)\s*(?:ml|mililitros?|copo?s?)/i);
+    const ml = mlMatch ? parseInt(mlMatch[1]) : 200;
+    aguaAtual += ml;
+    setData('agua_'+hoje_, aguaAtual);
+    renderAgua();
+    return `💧 Anotei ${ml}ml de água! Você já bebeu ${aguaAtual}ml hoje. ${aguaAtual>=2000?'🎉 Meta atingida!':'Meta: 2000ml.'}`;
+  }
+
+  // SALDO
+  if (t.includes('saldo')||t.includes('quanto tenho')||t.includes('meu dinheiro')) {
+    let g=0,gs=0;
+    trans.forEach(t=>{ if(t.tipo==='ganho')g+=t.valor; else gs+=t.valor; });
+    return `💰 Seu saldo atual é R$ ${fmt(g-gs)}. Ganhos: R$ ${fmt(g)} | Gastos: R$ ${fmt(gs)}.`;
+  }
+
+  // GASTOS HOJE
+  if ((t.includes('gastei')||t.includes('gasto'))&&(t.includes('hoje')||t.includes('dia'))) {
+    const gh = trans.filter(t=>t.tipo==='gasto'&&t.data===hoje_).reduce((s,t)=>s+t.valor,0);
+    return `📊 Hoje você gastou R$ ${fmt(gh)}.`;
+  }
+
+  // GASTOS MÊS
+  if ((t.includes('gastei')||t.includes('gasto'))&&(t.includes('mês')||t.includes('mes'))) {
+    const m=new Date().getMonth(), y=new Date().getFullYear();
+    const gm=trans.filter(t=>{ const d=new Date(t.data+'T00:00:00'); return t.tipo==='gasto'&&d.getMonth()===m&&d.getFullYear()===y; }).reduce((s,t)=>s+t.valor,0);
+    return `📊 Neste mês você gastou R$ ${fmt(gm)}.`;
+  }
+
+  // COMPROMISSOS
+  if (t.includes('compromisso')||t.includes('agenda')||t.includes('reunião')||t.includes('reuniao')) {
+    const comps=(getData('compromissos')||[]).filter(c=>c.data===hoje_);
+    if (!comps.length) return '📅 Você não tem compromissos hoje!';
+    return `📅 Hoje você tem ${comps.length} compromisso(s):\n`+comps.map(c=>`• ${c.hora} — ${c.titulo}`).join('\n');
+  }
+
+  return '🤔 Entendi! Tente ser mais específico. Exemplos:\n• "Gastei R$ 50 no mercado"\n• "Bebi 2 copos de água"\n• "Quanto gastei hoje?"';
+}
+
+// ===== MICROFONE =====
+window.toggleMic = function() {
+  if (micAtivo) { stopMic(); return; }
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('❌ Navegador não suporta voz. Use Chrome.'); return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'pt-BR';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.onresult = e => {
+    const texto = e.results[0][0].transcript;
+    document.getElementById('iaInput').value = texto;
+    stopMic();
+    enviarIA(texto);
+  };
+  recognition.onerror = () => stopMic();
+  recognition.onend = () => stopMic();
+  recognition.start();
+  micAtivo = true;
+  document.getElementById('btnMic').classList.add('listening');
+  showToast('🎙️ Ouvindo... fale agora!');
+};
+function stopMic() {
+  if (recognition) { try{recognition.stop();}catch(e){} recognition=null; }
+  micAtivo = false;
+  document.getElementById('btnMic').classList.remove('listening');
+}
+
+// ===== BLOQUEIO =====
+window.selPlano = function(p) {
+  planoSel = p;
+  document.getElementById('planoMensal').classList.toggle('sel', p==='mensal');
+  document.getElementById('planoAnual').classList.toggle('sel', p==='anual');
+};
+window.irWhatsApp = function() {
+  const preco = planoSel==='mensal'?'R$ 14,90':'R$ 99,90';
+  const msg = `Olá! Meu período de teste do Equilibra acabou e quero assinar o Plano ${planoSel==='mensal'?'Mensal ('+preco+'/mês)':'Anual ('+preco+'/ano)'}. Vou enviar o comprovante do Pix. Chave: ${PIX}`;
+  window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+};
+window.menuUsuario = function() {
+  if (confirm('Deseja sair da conta?')) {
+    setData('usuario', null);
+    location.reload();
+  }
+};
+
+// ===== HELPERS =====
+function hoje(){ return new Date().toISOString().split('T')[0]; }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+function fmt(v){ return Number(v).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+function formatDate(d){ if(!d)return'—'; const[y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
+window.showToast = function(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+};
+</script>
+</body>
+</html>
