@@ -181,6 +181,13 @@ h1,h2,h3{font-family:'Syne',sans-serif}
 .ia-chip{padding:.35rem .75rem;background:#f1f5f9;border-radius:50px;font-size:.72rem;
   font-weight:600;color:var(--text2);cursor:pointer;border:1px solid #e2e8f0;white-space:nowrap}
 .ia-chip:active{background:var(--primary-glow);color:var(--primary)}
+.ia-typing{display:flex;gap:4px;padding:.5rem;align-items:center}
+.ia-dot{width:7px;height:7px;border-radius:50%;background:var(--primary);animation:blink 1.2s infinite}
+.ia-dot:nth-child(2){animation-delay:.2s}
+.ia-dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+.ia-result-card{background:linear-gradient(135deg,#f0fdf4,#e0f2fe);border-radius:14px;padding:.85rem 1rem;border-left:4px solid var(--primary);margin:.25rem 0;font-size:.85rem;line-height:1.6}
+.ia-calc-result{font-family:'Syne',sans-serif;font-size:1.8rem;color:var(--primary);text-align:center;padding:.5rem;font-weight:700}
 
 /* MODAL ADICIONAR */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:400;
@@ -307,6 +314,7 @@ h1,h2,h3{font-family:'Syne',sans-serif}
     <div>
       <div class="topbar-greeting" id="greeting">Bom dia 👋</div>
       <div class="topbar-name" id="userName">Carregando...</div>
+      <div id="dataHoraTop" style="font-size:.72rem;color:#64748b;font-weight:600;margin-top:.1rem"></div>
     </div>
     <div style="display:flex;align-items:center;gap:.5rem">
       <div class="trial-pill hidden" id="trialPill">⏳ <span id="trialDias">7</span> dias</div>
@@ -547,11 +555,14 @@ h1,h2,h3{font-family:'Syne',sans-serif}
       <button class="ia-close" onclick="fecharIA()">✕ Fechar</button>
     </div>
     <div class="ia-suggestions">
-      <div class="ia-chip" onclick="enviarIA('Quanto gastei hoje?')">Quanto gastei hoje?</div>
-      <div class="ia-chip" onclick="enviarIA('Adicionar gasto de R$ 50 em alimentação')">Adicionar gasto</div>
-      <div class="ia-chip" onclick="enviarIA('Bebi 300ml de água')">Registrar água</div>
-      <div class="ia-chip" onclick="enviarIA('Qual meu saldo atual?')">Ver saldo</div>
-      <div class="ia-chip" onclick="enviarIA('Meus compromissos de hoje')">Compromissos</div>
+      <div class="ia-chip" onclick="enviarIA('Quanto gastei hoje?')">💸 Gastos hoje</div>
+      <div class="ia-chip" onclick="enviarIA('Meu saldo atual')">💰 Meu saldo</div>
+      <div class="ia-chip" onclick="enviarIA('Bebi 300ml de água')">💧 Água</div>
+      <div class="ia-chip" onclick="enviarIA('Meus compromissos de hoje')">📅 Agenda</div>
+      <div class="ia-chip" onclick="enviarIA('quanto é 150 mais 280')">🧮 Calcular</div>
+      <div class="ia-chip" onclick="enviarIA('dicas para economizar dinheiro')">💡 Dicas finanças</div>
+      <div class="ia-chip" onclick="enviarIA('como dormir melhor')">😴 Dicas saúde</div>
+      <div class="ia-chip" onclick="enviarIA('que horas são')">🕐 Hora atual</div>
     </div>
     <div class="ia-messages" id="iaMsgs">
       <div class="ia-msg bot">👋 Olá! Sou seu assistente pessoal. Pode falar comigo ou digitar o que precisa. Exemplos:<br><br>
@@ -693,6 +704,16 @@ function mostrarApp(diasTrial) {
   }
   // Data
   document.getElementById('dataHoje').textContent = new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  // Relógio em tempo real
+  function atualizarRelogio() {
+    const agora = new Date();
+    const hora = agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const data = agora.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'});
+    const el = document.getElementById('dataHoraTop');
+    if (el) el.textContent = data + ' • ' + hora;
+  }
+  atualizarRelogio();
+  setInterval(atualizarRelogio, 1000);
   // Água
   aguaAtual = getData('agua_'+hoje()) || 0;
   renderAgua();
@@ -1017,36 +1038,84 @@ window.enviarIA = function(textoFixo) {
   if (!texto) return;
   adicionarMsgIA(texto, 'user');
   input.value = '';
+  // Delay variável para parecer mais natural
+  const delay = 400 + Math.random() * 600;
   setTimeout(() => {
     const resp = processarIA(texto);
     adicionarMsgIA(resp, 'bot');
-  }, 600);
+  }, delay);
 };
 
 function adicionarMsgIA(texto, tipo) {
   const msgs = document.getElementById('iaMsgs');
+  // Animação de digitando
+  if (tipo === 'bot') {
+    const typing = document.createElement('div');
+    typing.className = 'ia-msg bot ia-typing';
+    typing.innerHTML = '<div class="ia-dot"></div><div class="ia-dot"></div><div class="ia-dot"></div>';
+    typing.id = 'typingIndicator';
+    msgs.appendChild(typing);
+    msgs.scrollTop = msgs.scrollHeight;
+    setTimeout(() => {
+      const t = document.getElementById('typingIndicator');
+      if (t) t.remove();
+      renderMsgBot(texto, msgs);
+    }, 800);
+  } else {
+    const div = document.createElement('div');
+    div.className = 'ia-msg user';
+    div.textContent = texto;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+}
+
+function renderMsgBot(texto, msgs) {
   const div = document.createElement('div');
-  div.className = 'ia-msg ' + tipo;
-  div.textContent = texto;
+  div.className = 'ia-msg bot';
+  // Suporte a markdown básico
+  let html = texto
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>')
+    .replace(/•/g, '&bull;');
+  // Se tem resultado de calculadora, destaca
+  if (texto.includes('=')) {
+    html = html.replace(/= (.*?)(<br>|$)/, '= <span style="font-size:1.2rem;font-weight:800;color:var(--primary)">$1</span>$2');
+  }
+  div.innerHTML = html;
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }
 
+function amanha() {
+  const d = new Date(); d.setDate(d.getDate()+1);
+  return d.toISOString().split('T')[0];
+}
+function proximoDiaSemana(diaSemana) {
+  const d = new Date();
+  const atual = d.getDay();
+  let diff = diaSemana - atual;
+  if (diff <= 0) diff += 7;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().split('T')[0];
+}
 function extrairValor(texto) {
-  // Tenta vários padrões para extrair valor monetário
+  // Padrões específicos primeiro (mais confiáveis)
   const padroes = [
-    /(?:r\$|reais?)?\s*(\d+(?:[.,]\d+)?)\s*(?:reais?|real)?/gi,
     /gastei\s+(?:r\$\s*)?(\d+(?:[.,]\d+)?)/i,
     /paguei\s+(?:r\$\s*)?(\d+(?:[.,]\d+)?)/i,
     /comprei\s+(?:por\s+)?(?:r\$\s*)?(\d+(?:[.,]\d+)?)/i,
     /foi\s+(?:r\$\s*)?(\d+(?:[.,]\d+)?)/i,
     /custa?(?:ou)?\s+(?:r\$\s*)?(\d+(?:[.,]\d+)?)/i,
-    /(\d+(?:[.,]\d+)?)\s*(?:reais?|real|pila|conto)/i,
+    /ganhei\s+(?:r\$\s*)?(\d+(?:[.,]\d+)?)/i,
+    /recebi\s+(?:r\$\s*)?(\d+(?:[.,]\d+)?)/i,
+    /r\$\s*(\d+(?:[.,]\d+)?)/i,                    // R$ 50
+    /(\d+(?:[.,]\d+)?)\s*(?:reais?|real|pila|conto)/i, // 50 reais
   ];
   for (const p of padroes) {
     const m = texto.match(p);
-    if (m) {
-      const val = parseFloat((m[1]||m[0]).replace(',','.'));
+    if (m && m[1]) {
+      const val = parseFloat(m[1].replace(',','.'));
       if (val > 0 && val < 100000) return val;
     }
   }
@@ -1081,6 +1150,40 @@ function processarIA(texto) {
   const trans = getData('transacoes')||[];
   const hoje_ = hoje();
 
+  // ===== COMPROMISSO VIA VOZ (detecta ANTES de gasto) =====
+  // Ex: "amanhã 5 horas tenho serviço", "sexta às 14h consulta médica"
+  const temHorario = textoOriginal.match(/(?:às?|as|ao?s?)\s*(\d{1,2})(?:[:h](\d{0,2}))?\s*(?:horas?|hrs?)?/i);
+  const temEvento = t.match(/tenho|vou|reuniao|consulta|servico|servico|trabalho|colocar|instalar|visita|encontro|compromisso|agenda|marcar|lembrar|amanha|semana|segunda|terca|quarta|quinta|sexta|sabado|domingo/);
+  const naoEGasto = !t.match(/gastei|paguei|comprei|foi r\$|custa|custou|r\$/i);
+
+  if (temHorario && temEvento && naoEGasto) {
+    const hora = temHorario[1].padStart(2,'0') + ':' + (temHorario[2]||'00').padStart(2,'0');
+    // Determinar data
+    let dataComp = hoje_;
+    if (t.match(/amanha|amanhã/)) {
+      const d = new Date(); d.setDate(d.getDate()+1);
+      dataComp = d.toISOString().split('T')[0];
+    } else if (t.match(/segunda/)) { dataComp = proximoDiaSemana(1); }
+    else if (t.match(/terca|terça/)) { dataComp = proximoDiaSemana(2); }
+    else if (t.match(/quarta/)) { dataComp = proximoDiaSemana(3); }
+    else if (t.match(/quinta/)) { dataComp = proximoDiaSemana(4); }
+    else if (t.match(/sexta/)) { dataComp = proximoDiaSemana(5); }
+    else if (t.match(/sabado|sábado/)) { dataComp = proximoDiaSemana(6); }
+    else if (t.match(/domingo/)) { dataComp = proximoDiaSemana(0); }
+    // Título limpo
+    const titulo = textoOriginal
+      .replace(/amanha|amanhã|hoje|segunda|terca|terça|quarta|quinta|sexta|sabado|sábado|domingo/gi,'')
+      .replace(/às?\s*\d{1,2}(?:[:h]\d{0,2})?\s*(?:horas?|hrs?)?/gi,'')
+      .replace(/tenho|vou|eu|as|às/gi,'')
+      .replace(/\s+/g,' ').trim().substring(0,50) || 'Compromisso';
+    const comps = getData('compromissos')||[];
+    comps.push({id:uid(),titulo,data:dataComp,hora,local:'',done:false});
+    setData('compromissos',comps);
+    renderAgenda(); renderHome();
+    const dataFmt = dataComp===hoje_?'hoje':dataComp===amanha()?'amanhã':formatDate(dataComp);
+    return '📅 Compromisso salvo! "'+titulo+'" — '+dataFmt+' às '+hora;
+  }
+
   // ===== REGISTRAR GANHO =====
   const isGanho = t.match(/ganhei|recebi|entrou|salario|pagamento|renda|lucro|vendi/);
   if (isGanho) {
@@ -1096,18 +1199,24 @@ function processarIA(texto) {
   }
 
   // ===== REGISTRAR GASTO =====
-  const isGasto = t.match(/gast|pagu|compr|comprei|foi|cust|gastei|paguei|comprei|coloc|adicion|registr|anot/);
-  if (isGasto && !t.match(/quanto|total|hoje|semana|mes|mês/)) {
+  // Detecta: "r$ 50 para fulano", "paguei 80", "gastei 30 no mercado"
+  const temR$ = t.match(/r\$/i);
+  const isGasto = t.match(/gast|pagu|compr|foi|cust|coloc|adicion|registr|anot|para |enviei|transferi|mandei/) || temR$;
+  if (isGasto && !t.match(/quanto|total|hoje.*gast|semana|mes|mês|recebi|ganhei/) && !t.match(/tenho|vou|reuniao|consulta|servico|trabalho/)) {
     const val = extrairValor(textoOriginal);
     if (val) {
       const cat = detectarCategoria(t);
       const trans2 = getData('transacoes')||[];
       const desc = textoOriginal.substring(0,60);
-      trans2.push({id:uid(),tipo:'gasto',valor:val,descricao:desc,categoria:cat,data:hoje_,criadoEm:new Date().toISOString()});
+      // Detecta "para quem" foi o pagamento
+      const paraMatch = textoOriginal.match(/para\s+([A-ZÀ-Ü][a-zà-ü]+)/i);
+      const descFinal = paraMatch ? desc + ' (para '+paraMatch[1]+')' : desc;
+      trans2.push({id:uid(),tipo:'gasto',valor:val,descricao:descFinal,categoria:cat,data:hoje_,criadoEm:new Date().toISOString()});
       setData('transacoes',trans2);
       renderHome(); renderFinancas();
       const catNome = getCats('gasto').find(c=>c.id===cat)?.label||'Outros';
-      return '✅ Pronto! Registrei R$ '+fmt(val)+' de gasto em '+catNome+'. Seu saldo foi atualizado! 📊';
+      const paraInfo = paraMatch?' para '+paraMatch[1]:'';
+      return '✅ Gasto de R$ '+fmt(val)+paraInfo+' registrado em '+catNome+'! 📊';
     }
   }
 
@@ -1182,8 +1291,123 @@ function processarIA(texto) {
     if (t.match(/triste|mal|ruim|estressado|ansioso|deprimido/)) { setHumor('😔'); return '😔 Sinto muito. Cuide-se! Beber água e respirar fundo ajuda.'; }
   }
 
-  // ===== FALLBACK =====
-  return '🤔 Não entendi completamente. Tente assim:\n• "Gastei 50 reais no mercado"\n• "Recebi 1500 de salário"\n• "Bebi 2 copos de água"\n• "Quanto gastei hoje?"\n• "Meu saldo atual"';
+  // ===== CALCULADORA =====
+  const calcMatch = textoOriginal.match(/(\d+(?:[.,]\d+)?)\s*([+\-x×*÷/])\s*(\d+(?:[.,]\d+)?)/);
+  const calcWords = t.match(/quanto[\s\wé]+?(\d+(?:[.,]\d+)?)\s*(mais|menos|vezes|dividido|por)\s*(\d+(?:[.,]\d+)?)/i);
+  if (calcMatch || calcWords) {
+    let a, op, b, resultado, opSimbol;
+    if (calcMatch) {
+      a = parseFloat(calcMatch[1].replace(',','.'));
+      op = calcMatch[2];
+      b = parseFloat(calcMatch[3].replace(',','.'));
+    } else {
+      a = parseFloat(calcWords[1].replace(',','.'));
+      op = calcWords[2];
+      b = parseFloat(calcWords[3].replace(',','.'));
+    }
+    if (op==='+'||op==='mais') { resultado=a+b; opSimbol='+'; }
+    else if (op==='-'||op==='menos') { resultado=a-b; opSimbol='-'; }
+    else if (op==='x'||op==='×'||op==='*'||op==='vezes') { resultado=a*b; opSimbol='×'; }
+    else if (op==='/'||op==='÷'||op==='dividido'||op==='por') { resultado=b!==0?a/b:null; opSimbol='÷'; }
+    if (resultado !== null && resultado !== undefined) {
+      const res = Number.isInteger(resultado) ? resultado : resultado.toFixed(2).replace('.',',');
+      return '🧮 Calculadora\n'+a+' '+opSimbol+' '+b+' = **'+res+'**';
+    }
+  }
+
+  // ===== HORA E DATA ATUAL =====
+  if (t.match(/que horas|hora atual|horas sao|horas são|que dia|data hoje|dia hoje|que dia é/)) {
+    const agora = new Date();
+    const hora = agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const data = agora.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    return '🕐 Agora são '+hora+'\n📅 '+data.charAt(0).toUpperCase()+data.slice(1);
+  }
+
+  // ===== DICAS DE SAÚDE =====
+  if (t.match(/dica.*saude|saude.*dica|como dormir|sono melhor|dormir bem|como emagrec|perder peso|exercicio|academia|correr|alimenta|comer saudavel|pressao alta|diabetes|colesterol|ansiedade|estresse|depressao|depressão/)) {
+    const dicasSaude = {
+      'dormir|sono': '😴 **Dicas para dormir melhor:**\n• Durma e acorde sempre no mesmo horário\n• Evite telas 1h antes de dormir\n• Mantenha o quarto escuro e fresco\n• Evite cafeína após as 15h\n• Faça respirações lentas ao deitar',
+      'emagrec|peso': '⚖️ **Dicas para emagrecer com saúde:**\n• Beba 2L de água por dia\n• Coma de 3 em 3 horas\n• Reduza açúcar e alimentos ultraprocessados\n• Caminhe pelo menos 30 min por dia\n• Durma 7-8 horas por noite',
+      'exercicio|academia|correr|treino': '💪 **Dicas de exercício:**\n• Comece com 3x por semana\n• Alterne musculação e cardio\n• Hidrate-se antes, durante e depois\n• Respeite o descanso entre treinos\n• Aqueça sempre por 10 minutos',
+      'alimenta|comer': '🥗 **Alimentação saudável:**\n• Priorize proteínas, vegetais e frutas\n• Evite frituras e fast food\n• Coma devagar e mastigue bem\n• Reduza sal e açúcar\n• Não pule o café da manhã',
+      'pressao|hipertensao': '❤️ **Pressão alta:**\n• Reduza o sal na alimentação\n• Faça exercícios regularmente\n• Evite álcool e cigarro\n• Controle o estresse\n• Monitore a pressão regularmente',
+      'ansiedade|estresse|estress': '🧘 **Controle a ansiedade:**\n• Respire fundo: inspire 4s, segure 4s, expire 4s\n• Pratique meditação por 10 min ao dia\n• Faça exercícios físicos regularmente\n• Evite excesso de notícias\n• Converse com pessoas próximas',
+      'agua|hidrat': '💧 **Hidratação:**\n• Beba 35ml por kg de peso\n• Prefira água em vez de refrigerante\n• Beba um copo ao acordar\n• Não espere ter sede\n• Frutas também hidratam!',
+    };
+    for (const [chave, dica] of Object.entries(dicasSaude)) {
+      if (t.match(new RegExp(chave))) return dica;
+    }
+    return '🍏 **Saúde geral:**\n• Beba 2L de água por dia\n• Durma 7-8 horas\n• Faça 30 min de exercício\n• Coma frutas e vegetais\n• Controle o estresse com respiração\n• Faça check-up anual';
+  }
+
+  // ===== DICAS DE FINANÇAS =====
+  if (t.match(/dica.*financ|financ.*dica|economizar|poupar|investir|investimento|sair das dividas|divida|dividas|cartao de credito|juros|renda|salario.*sobre|guardar dinheiro|reserva|emergencia/)) {
+    const dicasFinancas = {
+      'economizar|poupar|guardar': '💰 **Como economizar dinheiro:**\n• Use a regra 50-30-20: 50% necessidades, 30% desejos, 20% poupança\n• Anote todos os gastos (use este app!)\n• Evite compras por impulso — espere 24h\n• Cancele assinaturas que não usa\n• Cozinhe mais em casa\n• Compare preços antes de comprar',
+      'investir|investimento': '📈 **Começar a investir:**\n• Primeiro: quite as dívidas caras\n• Segundo: monte uma reserva de emergência (3-6 meses de gastos)\n• Terceiro: Tesouro Direto é seguro para iniciantes\n• CDB, LCI e LCA rendem mais que poupança\n• Diversifique: não coloque tudo em um lugar\n• Invista todo mês, mesmo pouco',
+      'divida|dividas|cartao': '💳 **Sair das dívidas:**\n• Liste todas as dívidas e juros\n• Pague primeiro as de juros mais altos\n• Negocie: credores preferem receber menos a não receber nada\n• Evite parcelas no cartão de crédito\n• Corte gastos supérfluos temporariamente\n• Busque renda extra',
+      'reserva|emergencia': '🛡️ **Reserva de emergência:**\n• Meta: 3 a 6 meses do seu custo de vida\n• Guarde em conta com liquidez diária (CDB, Tesouro Selic)\n• Não misture com outros investimentos\n• Só use em emergências reais\n• Recomponha sempre que usar',
+      'renda|extra|freelance': '💼 **Renda extra:**\n• Venda o que não usa (Marketplace, OLX)\n• Ofereça serviços que você sabe fazer\n• Delivery, aulas particulares, artesanato\n• Monetize hobbies\n• Cursos online ensinam habilidades vendáveis',
+    };
+    for (const [chave, dica] of Object.entries(dicasFinancas)) {
+      if (t.match(new RegExp(chave))) return dica;
+    }
+    return '💰 **Finanças saudáveis:**\n• Regra 50-30-20 para organizar o dinheiro\n• Quite dívidas antes de investir\n• Monte reserva de emergência\n• Invista regularmente, mesmo pouco\n• Anote todos os gastos\n• Evite compras por impulso';
+  }
+
+  // ===== INFORMAÇÕES GERAIS =====
+  if (t.match(/o que é|o que sao|me explica|explica|como funciona|significado|definicao|definição/)) {
+    if (t.match(/tesouro direto|tesouro selic|cdb|lci|lca|fundo|acao|bolsa|bitcoin/)) {
+      return '📈 **Investimentos básicos:**\n• **Tesouro Direto**: títulos do governo, muito seguros\n• **CDB**: empréstimo ao banco, rende mais que poupança\n• **LCI/LCA**: isentos de IR, bons para médio prazo\n• **Ações**: parte de empresas, mais risco e retorno\n• **Bitcoin/Cripto**: alto risco, alta volatilidade\n\nPara iniciantes: comece pelo Tesouro Selic!';
+    }
+    if (t.match(/imc|indice de massa|peso ideal/)) {
+      return '⚖️ **IMC (Índice de Massa Corporal):**\nFórmula: Peso ÷ (Altura × Altura)\n\n• Abaixo de 18,5: Abaixo do peso\n• 18,5 a 24,9: Peso ideal ✅\n• 25 a 29,9: Sobrepeso\n• 30 a 34,9: Obesidade grau 1\n• 35 a 39,9: Obesidade grau 2\n• Acima de 40: Obesidade grau 3\n\nMe diga seu peso e altura para calcular!';
+    }
+    if (t.match(/imc.*\d|\d.*kg.*\d.*m|peso.*\d.*altura.*\d/)) {
+      const nums = textoOriginal.match(/\d+(?:[.,]\d+)?/g);
+      if (nums && nums.length >= 2) {
+        const peso = parseFloat(nums[0].replace(',','.'));
+        const altura = parseFloat(nums[1].replace(',','.'));
+        const altM = altura > 3 ? altura/100 : altura;
+        const imc = peso/(altM*altM);
+        let classif = '';
+        if (imc<18.5) classif='Abaixo do peso';
+        else if (imc<25) classif='Peso ideal ✅';
+        else if (imc<30) classif='Sobrepeso';
+        else if (imc<35) classif='Obesidade grau 1';
+        else classif='Obesidade grau 2+';
+        return '⚖️ Seu IMC é **'+imc.toFixed(1)+'** — '+classif+'\nPeso: '+peso+'kg | Altura: '+altM.toFixed(2)+'m';
+      }
+    }
+  }
+
+  // ===== CALCULAR IMC DIRETAMENTE =====
+  if (t.match(/meu imc|calcular imc|calcula.*imc/)) {
+    return '⚖️ Para calcular seu IMC me diga:\n"Meu peso é X kg e altura Y metros"\nEx: "Meu peso é 70 kg e altura 1,75"';
+  }
+  const imcMatch = textoOriginal.match(/peso[\s\wé]+?(\d+(?:[.,]\d+)?)\s*kg.*altura[\s\wé]+?(\d+(?:[.,]\d+)?)/i);
+  if (imcMatch) {
+    const peso = parseFloat(imcMatch[1].replace(',','.'));
+    const altM = parseFloat(imcMatch[2].replace(',','.')) > 3 ? parseFloat(imcMatch[2].replace(',','.'))/100 : parseFloat(imcMatch[2].replace(',','.'));
+    const imc = peso/(altM*altM);
+    let classif = imc<18.5?'Abaixo do peso':imc<25?'Peso ideal ✅':imc<30?'Sobrepeso':imc<35?'Obesidade grau 1':'Obesidade grave';
+    return '⚖️ IMC: **'+imc.toFixed(1)+'** — '+classif+'\nPeso: '+peso+'kg | Altura: '+altM+'m';
+  }
+
+  // ===== MOTIVAÇÃO =====
+  if (t.match(/motivac|anima|desanim|fraca|cansad|desist|ajuda/)) {
+    const frases = [
+      '💪 "O único lugar onde o sucesso vem antes do trabalho é no dicionário." — Vidal Sassoon',
+      '🌟 "Não importa o quão devagar você vá, desde que não pare." — Confúcio',
+      '🚀 "A jornada de mil milhas começa com um único passo." — Lao-Tsé',
+      '💡 "O sucesso é a soma de pequenos esforços repetidos dia após dia." — Robert Collier',
+      '🎯 "Acredite que você pode, e você já está na metade do caminho." — Theodore Roosevelt',
+    ];
+    return frases[Math.floor(Math.random()*frases.length)] + '\n\n✨ Você está no caminho certo! Continue registrando seus hábitos e finanças.';
+  }
+
+  // ===== FALLBACK MELHORADO =====
+  return '🤖 Posso te ajudar com:\n\n💸 **Finanças:** "Gastei 50 no mercado"\n💰 **Ganhos:** "Recebi 1500 de salário"\n📅 **Agenda:** "Amanhã às 14h tenho consulta"\n💧 **Água:** "Bebi 300ml de água"\n🧮 **Cálculos:** "Quanto é 250 mais 180?"\n💡 **Dicas saúde:** "Como dormir melhor?"\n📈 **Dicas finanças:** "Como economizar dinheiro?"\n⚖️ **IMC:** "Meu peso é 70kg e altura 1,75"\n📊 **Consultas:** "Quanto gastei hoje?"\n🕐 **Hora/Data:** "Que horas são?"';
 }
 
 // ===== MICROFONE =====
