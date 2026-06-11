@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Meu Controle</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#0d1117;--surface:#161b22;--surface2:#21262d;--surface3:#30363d;
@@ -19,8 +20,6 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow-x:hidden}
-
-/* SIDEBAR */
 .sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:transform .3s}
 .sidebar-logo{padding:1.5rem 1.25rem 1rem;border-bottom:1px solid var(--border)}
 .logo-text{font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--primary);letter-spacing:-.5px}
@@ -38,8 +37,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#00a87a);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.875rem;color:#0d1117;flex-shrink:0}
 .user-name{font-size:.82rem;font-weight:600;color:var(--text)}
 .user-date{font-size:.7rem;color:var(--text3)}
-
-/* MAIN */
 .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
 .topbar{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);position:sticky;top:0;z-index:50}
 .page-title{font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--text)}
@@ -50,16 +47,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .btn-ghost{padding:.55rem 1rem;background:transparent;color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius);font-size:.82rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
 .btn-ghost:hover{background:var(--surface2);color:var(--text)}
 .hamburger{display:none;background:none;border:none;color:var(--text);font-size:1.3rem;cursor:pointer;padding:.3rem}
-
-/* CONTENT */
 .content{padding:1.5rem;flex:1}
 .page{display:none}
 .page.active{display:block}
-
-/* CARDS RESUMO */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem;transition:all .2s}
 .stat-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.stat-card.highlight{background:linear-gradient(135deg,var(--primary-dim),var(--surface));border-color:rgba(0,212,170,.25)}
+.stat-card.highlight .stat-value{color:var(--primary)}
 .stat-label{font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;display:flex;align-items:center;gap:.4rem}
 .stat-value{font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--text)}
 .stat-value.green{color:var(--success)}
@@ -67,10 +62,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .stat-value.yellow{color:var(--accent)}
 .stat-value.blue{color:var(--info)}
 .stat-change{font-size:.7rem;color:var(--text3);margin-top:.25rem}
-
-/* TABELAS / LISTAS */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1rem}
-.card-header{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-header{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
 .card-title{font-size:.9rem;font-weight:700;color:var(--text)}
 .list-item{padding:.85rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.85rem;transition:background .15s}
 .list-item:last-child{border-bottom:none}
@@ -86,8 +79,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .action-btn{width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .action-btn.edit{background:var(--info-dim);color:var(--info)}
 .action-btn.del{background:var(--danger-dim);color:var(--danger)}
-
-/* BADGE STATUS */
 .badge{padding:.2rem .6rem;border-radius:50px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
 .badge.pago{background:var(--success-dim);color:var(--success)}
 .badge.pendente{background:var(--accent-dim);color:var(--accent)}
@@ -96,8 +87,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .badge.dinheiro{background:var(--success-dim);color:var(--success)}
 .badge.fiado{background:var(--accent-dim);color:var(--accent)}
 .badge.cartao{background:var(--info-dim);color:var(--info)}
-
-/* FORMULÁRIOS */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
 .form-group{display:flex;flex-direction:column;gap:.4rem}
 .form-group.full{grid-column:1/-1}
@@ -106,8 +95,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
 .form-textarea{resize:vertical;min-height:100px;line-height:1.6}
 .form-select option{background:var(--surface2)}
-
-/* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)}
 .modal-overlay.open{display:flex}
 .modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:1.5rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
@@ -115,8 +102,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .modal-title{font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--text)}
 .modal-close{background:var(--surface2);border:none;color:var(--text2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
 .modal-footer{display:flex;gap:.75rem;margin-top:1.25rem;justify-content:flex-end}
-
-/* AGENDA */
 .agenda-calendar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem}
 .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
 .cal-title{font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--text)}
@@ -130,15 +115,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .cal-day.selected{background:var(--primary);color:#0d1117;font-weight:700}
 .cal-day.has-note::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--accent)}
 .cal-day.empty{cursor:default}
-
-/* NOTAS DO DIA */
 .note-area{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem}
 .note-date-title{font-size:.82rem;font-weight:700;color:var(--primary);margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
 .note-textarea{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:.85rem;font-size:.9rem;font-family:'DM Sans',sans-serif;color:var(--text);resize:vertical;min-height:160px;line-height:1.7;transition:all .2s}
 .note-textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
 .note-actions{display:flex;gap:.5rem;margin-top:.75rem;justify-content:flex-end}
-
-/* COMPROMISSOS */
 .comp-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1.1rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.85rem;transition:all .15s}
 .comp-item:hover{border-color:var(--border2)}
 .comp-item.done{opacity:.5}
@@ -152,8 +133,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .comp-urgencia.alta{background:var(--danger-dim);color:var(--danger)}
 .comp-urgencia.media{background:var(--accent-dim);color:var(--accent)}
 .comp-urgencia.baixa{background:var(--success-dim);color:var(--success)}
-
-/* CONTATOS */
 .contato-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.85rem;transition:all .15s}
 .contato-card:hover{border-color:var(--border2);transform:translateX(2px)}
 .contato-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;flex-shrink:0}
@@ -166,25 +145,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .btn-tel:hover{background:var(--primary);color:#0d1117}
 .btn-wpp{padding:.4rem .75rem;background:rgba(37,211,102,.12);color:#25d366;border:none;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
 .btn-wpp:hover{background:#25d366;color:#fff}
-
-/* FILTROS */
 .filter-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
 .filter-btn{padding:.4rem .9rem;background:var(--surface2);border:1px solid var(--border);border-radius:50px;font-size:.75rem;font-weight:600;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
 .filter-btn.active{background:var(--primary-dim);border-color:var(--primary);color:var(--primary)}
-
-/* VAZIO */
 .empty-state{text-align:center;padding:3rem 1rem;color:var(--text3)}
 .empty-icon{font-size:2.5rem;margin-bottom:.75rem}
 .empty-text{font-size:.9rem;font-weight:600;color:var(--text2);margin-bottom:.25rem}
 .empty-sub{font-size:.8rem}
-
-/* TOAST */
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:.7rem 1.2rem;border-radius:var(--radius);font-size:.82rem;font-weight:600;z-index:9999;opacity:0;transition:all .3s;transform:translateY(10px);pointer-events:none;max-width:320px}
 .toast.show{opacity:1;transform:translateY(0)}
 .toast.success{border-color:var(--success);color:var(--success)}
 .toast.error{border-color:var(--danger);color:var(--danger)}
-
-/* MOBILE */
 .mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90}
 @media(max-width:768px){
   .sidebar{transform:translateX(-100%)}
@@ -198,13 +169,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   .content{padding:1rem}
 }
 @media(max-width:400px){.stats-grid{grid-template-columns:1fr}}
-
-/* SCROLLBAR */
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:50px}
-
-/* ANIMAÇÃO */
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .page.active{animation:fadeIn .25s ease}
 </style>
@@ -213,15 +180,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 <div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>
 
-<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="logo-text">Meu Controle</div>
     <div class="logo-sub">Gestão do seu negócio</div>
   </div>
   <nav class="sidebar-nav">
+    <div class="nav-section">Visão Geral</div>
+    <div class="nav-item active" onclick="navTo('painel')" id="nav-painel">
+      <span class="nav-icon">📊</span> Painel
+    </div>
     <div class="nav-section">Financeiro</div>
-    <div class="nav-item active" onclick="navTo('gastos')" id="nav-gastos">
+    <div class="nav-item" onclick="navTo('gastos')" id="nav-gastos">
       <span class="nav-icon">💸</span> Gastos
     </div>
     <div class="nav-item" onclick="navTo('vendas')" id="nav-vendas">
@@ -261,7 +231,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   </div>
 </div>
 
-<!-- MAIN -->
 <div class="main">
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:.75rem">
@@ -278,8 +247,111 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
   <div class="content">
 
-    <!-- GASTOS -->
-    <div class="page active" id="pageGastos">
+    <div class="page active" id="pagePainel">
+      <div class="stats-grid">
+        <div class="stat-card highlight">
+          <div class="stat-label">📈 Saldo de hoje</div>
+          <div class="stat-value" id="painelSaldoHoje">R$ 0,00</div>
+          <div class="stat-change" id="painelSaldoHojeSub">Vendas + ganhos − gastos</div>
+        </div>
+        <div class="stat-card highlight">
+          <div class="stat-label">📅 Saldo do mês</div>
+          <div class="stat-value" id="painelSaldoMes">R$ 0,00</div>
+          <div class="stat-change" id="painelSaldoMesSub">Receitas − despesas no mês</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">🛒 Vendas hoje</div>
+          <div class="stat-value green" id="painelVendasHoje">R$ 0,00</div>
+          <div class="stat-change" id="painelVendasComp">vs. ontem</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">💸 Gastos hoje</div>
+          <div class="stat-value red" id="painelGastosHoje">R$ 0,00</div>
+          <div class="stat-change" id="painelGastosComp">vs. ontem</div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">📒 Fiado pendente</div>
+          <div class="stat-value yellow" id="painelFiadoPendente">R$ 0,00</div>
+          <div class="stat-change" id="painelFiadoQtd">0 cliente(s)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">⚠️ Contas a vencer (7 dias)</div>
+          <div class="stat-value yellow" id="painelContasVencer">R$ 0,00</div>
+          <div class="stat-change" id="painelContasVencerQtd">0 conta(s)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">🔴 Contas vencidas</div>
+          <div class="stat-value red" id="painelContasVencidas">R$ 0,00</div>
+          <div class="stat-change" id="painelContasVencidasQtd">0 conta(s)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">📅 Compromissos hoje</div>
+          <div class="stat-value blue" id="painelCompHoje">0</div>
+          <div class="stat-change" id="painelCompProx">Nenhum agendado</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" id="graficoTitulo">📊 Últimos 7 dias — Receitas x Gastos</div>
+          <div class="filter-row" style="margin-bottom:0">
+            <button class="filter-btn active" onclick="setPeriodoGrafico('semana',this)">Semana</button>
+            <button class="filter-btn" onclick="setPeriodoGrafico('mes',this)">Mês</button>
+          </div>
+        </div>
+        <div style="padding:1.25rem">
+          <canvas id="graficoSemana" height="160"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">📆 Resumo do mês</div></div>
+        <div style="padding:1.25rem">
+          <div class="stats-grid" style="margin-bottom:0">
+            <div class="stat-card">
+              <div class="stat-label">🛒 Vendas</div>
+              <div class="stat-value green" id="resumoMesVendas">R$ 0,00</div>
+              <div class="stat-change" id="resumoMesVendasQtd">0 venda(s)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">💰 Outros ganhos</div>
+              <div class="stat-value green" id="resumoMesGanhos">R$ 0,00</div>
+              <div class="stat-change" id="resumoMesGanhosQtd">0 registro(s)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">💸 Gastos do negócio</div>
+              <div class="stat-value red" id="resumoMesGastos">R$ 0,00</div>
+              <div class="stat-change" id="resumoMesGastosQtd">0 registro(s)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">🏠 Gastos de casa</div>
+              <div class="stat-value red" id="resumoMesCasa">R$ 0,00</div>
+              <div class="stat-change" id="resumoMesCasaQtd">0 registro(s)</div>
+            </div>
+          </div>
+          <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:.85rem;color:var(--text2);font-weight:600">Lucro do mês (receitas − despesas)</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:1.5rem" id="resumoMesLucro">R$ 0,00</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🛒 Últimas vendas</div></div>
+          <div id="painelUltimasVendas"><div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">Nenhuma venda ainda</div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📅 Próximos compromissos</div></div>
+          <div id="painelProximosComp"><div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Nenhum compromisso</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="pageGastos">
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-label">💸 Hoje</div><div class="stat-value red" id="gastosHoje">R$ 0,00</div></div>
         <div class="stat-card"><div class="stat-label">📅 Esta semana</div><div class="stat-value red" id="gastosSemana">R$ 0,00</div></div>
@@ -298,7 +370,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
     </div>
 
-    <!-- VENDAS -->
     <div class="page" id="pageVendas">
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-label">🛒 Hoje</div><div class="stat-value green" id="vendasHoje">R$ 0,00</div></div>
@@ -318,7 +389,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
     </div>
 
-    <!-- GASTOS DE CASA -->
     <div class="page" id="pageCasa">
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-label">🏠 Hoje</div><div class="stat-value red" id="casaHoje">R$ 0,00</div></div>
@@ -331,7 +401,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
     </div>
 
-    <!-- CONTAS A PAGAR -->
     <div class="page" id="pageContas">
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-label">⚠️ Pendentes</div><div class="stat-value yellow" id="contasPendentes">R$ 0,00</div></div>
@@ -350,7 +419,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
     </div>
 
-    <!-- O QUE GANHEI HOJE -->
     <div class="page" id="pageGanhos">
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-label">💳 Pix</div><div class="stat-value green" id="ganhosPix">R$ 0,00</div></div>
@@ -376,7 +444,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
     </div>
 
-    <!-- AGENDA / DIÁRIO -->
     <div class="page" id="pageAgenda">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
         <div>
@@ -402,7 +469,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
     </div>
 
-    <!-- COMPROMISSOS -->
     <div class="page" id="pageCompromissos">
       <div class="filter-row">
         <button class="filter-btn active" onclick="setFiltroComp('todos',this)">Todos</button>
@@ -413,7 +479,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div id="listaCompromissos"><div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Nenhum compromisso cadastrado</div></div></div>
     </div>
 
-    <!-- CONTATOS -->
     <div class="page" id="pageContatos">
       <div style="display:flex;gap:.5rem;margin-bottom:1rem">
         <input type="text" class="form-input" id="buscaContato" placeholder="🔍 Buscar contato..." oninput="renderContatos()" style="flex:1">
@@ -431,7 +496,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   </div>
 </div>
 
-<!-- MODAIS -->
 <div class="modal-overlay" id="modalPrincipal">
   <div class="modal">
     <div class="modal-header">
@@ -449,34 +513,39 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <div class="toast" id="toast"></div>
 
 <script>
-// ===== ESTADO =====
 let paginaAtual = 'gastos';
-let filtroGastos = 'todos', filtroVendas = 'todos', filtroContas = 'todas', filtroGanhos = 'hoje', filtroComp = 'todos', filtroContatos = 'todos';
 let calDate = new Date();
-let diaSelecionado = new Date().toISOString().split('T')[0];
 let modalTipo = '';
 let editandoId = null;
 
-// ===== STORAGE =====
 const D = key => { try { return JSON.parse(localStorage.getItem('mc_'+key)||'null'); } catch(e) { return null; } };
 const S = (key,val) => localStorage.setItem('mc_'+key, JSON.stringify(val));
 
-// ===== HELPERS =====
-const hoje = () => new Date().toISOString().split('T')[0];
+// CORRIGIDO: usa data LOCAL (não UTC), evitando que "hoje" vire o dia seguinte.
+function hoje() {
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function semanaAtras() {
+  const d = new Date();
+  d.setDate(d.getDate()-7);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+const inicioMes = () => { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'; };
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2);
 const fmt = v => 'R$ '+Number(v||0).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
-const fmtData = d => { if(!d)return'—'; const[y,m,day]=d.split('-'); return `${day}/${m}/${y}`; };
-const semanaAtras = () => { const d=new Date(); d.setDate(d.getDate()-7); return d.toISOString().split('T')[0]; };
-const inicioMes = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`; };
+const fmtData = d => { if(!d)return'—'; const[y,m,day]=d.split('-'); return day+'/'+m+'/'+y; };
 
-function showToast(msg, tipo='') {
+let diaSelecionado = hoje();
+
+function showToast(msg, tipo) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = 'toast show' + (tipo?' '+tipo:'');
   setTimeout(() => t.className='toast', 3000);
 }
 
-// ===== NAVEGAÇÃO =====
 const pageConfig = {
+  painel: { title:'Painel', sub:'Visão geral do seu negócio' },
   gastos: { title:'Gastos', sub:'Registre os gastos do seu negócio' },
   vendas: { title:'Vendas', sub:'Controle suas vendas' },
   casa: { title:'Gastos de Casa', sub:'Despesas domésticas' },
@@ -491,8 +560,10 @@ window.navTo = function(page) {
   paginaAtual = page;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page'+cap(page))?.classList.add('active');
-  document.getElementById('nav-'+page)?.classList.add('active');
+  const el = document.getElementById('page'+page.charAt(0).toUpperCase()+page.slice(1));
+  if (el) el.classList.add('active');
+  const nav = document.getElementById('nav-'+page);
+  if (nav) nav.classList.add('active');
   const cfg = pageConfig[page];
   document.getElementById('pageTitle').textContent = cfg.title;
   document.getElementById('pageSubtitle').textContent = cfg.sub;
@@ -500,10 +571,9 @@ window.navTo = function(page) {
   renderPage(page);
 };
 
-function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
-
 function renderPage(page) {
-  if (page==='gastos') renderGastos();
+  if (page==='painel') renderPainel();
+  else if (page==='gastos') renderGastos();
   else if (page==='vendas') renderVendas();
   else if (page==='casa') renderCasa();
   else if (page==='contas') renderContas();
@@ -513,17 +583,15 @@ function renderPage(page) {
   else if (page==='contatos') renderContatos();
 }
 
-// ===== SIDEBAR MOBILE =====
 window.toggleSidebar = function() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('mobileOverlay').classList.toggle('show'); };
 window.closeSidebar = function() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('mobileOverlay').classList.remove('show'); };
 
-// ===== MODAL PRINCIPAL =====
 window.abrirModalPrincipal = function(tipo, id) {
   editandoId = id || null;
-  modalTipo = tipo || paginaAtual;
+  modalTipo = tipo || (paginaAtual==='painel' ? 'gastos' : paginaAtual);
   const modal = document.getElementById('modalPrincipal');
   const dados = id ? getDadosParaEditar(modalTipo, id) : null;
-  document.getElementById('modalTitulo').textContent = (id ? 'Editar' : 'Novo') + ' — ' + pageConfig[modalTipo]?.title;
+  document.getElementById('modalTitulo').textContent = (id ? 'Editar' : 'Novo') + ' — ' + (pageConfig[modalTipo]?pageConfig[modalTipo].title:'');
   document.getElementById('modalConteudo').innerHTML = getFormHTML(modalTipo, dados);
   modal.classList.add('open');
 };
@@ -636,41 +704,40 @@ function getFormHTML(tipo, d) {
   return '';
 }
 
-// ===== SALVAR MODAL =====
 window.salvarModal = function() {
-  const g = id => document.getElementById(id)?.value?.trim()||'';
-  const gf = id => parseFloat(document.getElementById(id)?.value)||0;
+  const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const gf = id => { const el = document.getElementById(id); return el ? (parseFloat(el.value)||0) : 0; };
   let item = { id: editandoId || uid() };
 
   if (modalTipo==='gastos'||modalTipo==='casa') {
     if (!g('fDesc')||!gf('fValor')) { showToast('❌ Preencha descrição e valor','error'); return; }
-    item = {...item, desc:g('fDesc'), valor:gf('fValor'), data:g('fData')||hoje(), cat:g('fCat'), obs:g('fObs')};
+    item = Object.assign(item, {desc:g('fDesc'), valor:gf('fValor'), data:g('fData')||hoje(), cat:g('fCat'), obs:g('fObs')});
     salvarItem(modalTipo, item);
     showToast(modalTipo==='casa'?'🏠 Gasto de casa salvo!':'💸 Gasto registrado!','success');
-    renderGastos(); if(modalTipo==='casa') renderCasa();
+    renderGastos(); if(modalTipo==='casa') renderCasa(); renderPainel();
   } else if (modalTipo==='vendas') {
     if (!g('fDesc')||!gf('fValor')) { showToast('❌ Preencha descrição e valor','error'); return; }
-    item = {...item, desc:g('fDesc'), valor:gf('fValor'), data:g('fData')||hoje(), cliente:g('fCliente'), pagamento:g('fPagamento'), obs:g('fObs')};
+    item = Object.assign(item, {desc:g('fDesc'), valor:gf('fValor'), data:g('fData')||hoje(), cliente:g('fCliente'), pagamento:g('fPagamento'), obs:g('fObs')});
     salvarItem('vendas', item);
-    showToast('🛒 Venda registrada!','success'); renderVendas();
+    showToast('🛒 Venda registrada!','success'); renderVendas(); renderPainel();
   } else if (modalTipo==='contas') {
     if (!g('fDesc')||!gf('fValor')||!g('fVenc')) { showToast('❌ Preencha todos os campos obrigatórios','error'); return; }
-    item = {...item, desc:g('fDesc'), valor:gf('fValor'), venc:g('fVenc'), status:g('fStatus')||'pendente', obs:g('fObs')};
+    item = Object.assign(item, {desc:g('fDesc'), valor:gf('fValor'), venc:g('fVenc'), status:g('fStatus')||'pendente', obs:g('fObs')});
     salvarItem('contas', item);
-    showToast('📋 Conta salva!','success'); renderContas();
+    showToast('📋 Conta salva!','success'); renderContas(); renderPainel();
   } else if (modalTipo==='ganhos') {
     if (!g('fDesc')||!gf('fValor')) { showToast('❌ Preencha descrição e valor','error'); return; }
-    item = {...item, desc:g('fDesc'), valor:gf('fValor'), data:g('fData')||hoje(), pagamento:g('fPagamento'), cliente:g('fCliente'), fiadoPago:g('fFiadoPago')};
+    item = Object.assign(item, {desc:g('fDesc'), valor:gf('fValor'), data:g('fData')||hoje(), pagamento:g('fPagamento'), cliente:g('fCliente'), fiadoPago:g('fFiadoPago')});
     salvarItem('ganhos', item);
-    showToast('💰 Recebimento salvo!','success'); renderGanhos();
+    showToast('💰 Recebimento salvo!','success'); renderGanhos(); renderPainel();
   } else if (modalTipo==='compromissos') {
     if (!g('fDesc')||!g('fData')) { showToast('❌ Preencha título e data','error'); return; }
-    item = {...item, desc:g('fDesc'), data:g('fData'), hora:g('fHora'), local:g('fLocal'), urgencia:g('fUrgencia'), obs:g('fObs'), done:false};
+    item = Object.assign(item, {desc:g('fDesc'), data:g('fData'), hora:g('fHora'), local:g('fLocal'), urgencia:g('fUrgencia'), obs:g('fObs'), done:false});
     salvarItem('compromissos', item);
-    showToast('📅 Compromisso salvo!','success'); renderCompromissos(); atualizarBadges();
+    showToast('📅 Compromisso salvo!','success'); renderCompromissos(); atualizarBadges(); renderPainel();
   } else if (modalTipo==='contatos') {
     if (!g('fDesc')||!g('fTel')) { showToast('❌ Preencha nome e telefone','error'); return; }
-    item = {...item, desc:g('fDesc'), tel:g('fTel'), wpp:g('fWpp'), tipo:g('fTipo'), empresa:g('fEmpresa'), obs:g('fObs')};
+    item = Object.assign(item, {desc:g('fDesc'), tel:g('fTel'), wpp:g('fWpp'), tipo:g('fTipo'), empresa:g('fEmpresa'), obs:g('fObs')});
     salvarItem('contatos', item);
     showToast('📞 Contato salvo!','success'); renderContatos();
   }
@@ -688,9 +755,9 @@ function deletarItem(key, id, cb) {
   if (!confirm('Excluir este item?')) return;
   S(key, (D(key)||[]).filter(i=>i.id!==id));
   showToast('Item excluído'); cb();
+  if (typeof renderPainel==='function' && document.getElementById('graficoSemana')) renderPainel();
 }
 
-// ===== RENDERIZAR GASTOS =====
 let fgAtual = 'todos';
 window.setFiltroGastos = function(f, el) { fgAtual=f; document.querySelectorAll('#pageGastos .filter-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderGastos(); };
 
@@ -709,19 +776,17 @@ function renderGastos() {
   document.getElementById('gastosQtd').textContent = lista.length;
   const catIcons = {estoque:'📦',transporte:'🚗',servicos:'⚙️',impostos:'📄',marketing:'📢',outros:'💳'};
   document.getElementById('listaGastos').innerHTML = filtrada.length
-    ? [...filtrada].reverse().map(i=>`<div class="list-item">
-        <div class="item-icon" style="background:var(--danger-dim)">${catIcons[i.cat]||'💸'}</div>
-        <div class="item-info"><div class="item-name">${i.desc}</div><div class="item-sub">${fmtData(i.data)}${i.obs?' • '+i.obs:''}</div></div>
-        <div class="item-value debit">${fmt(i.valor)}</div>
-        <div class="item-actions">
-          <button class="action-btn edit" onclick="abrirModalPrincipal('gastos','${i.id}')">✏️</button>
-          <button class="action-btn del" onclick="deletarItem('gastos','${i.id}',renderGastos)">🗑️</button>
-        </div>
-      </div>`).join('')
+    ? [...filtrada].reverse().map(i=>'<div class="list-item">'+
+        '<div class="item-icon" style="background:var(--danger-dim)">'+(catIcons[i.cat]||'💸')+'</div>'+
+        '<div class="item-info"><div class="item-name">'+i.desc+'</div><div class="item-sub">'+fmtData(i.data)+(i.obs?' • '+i.obs:'')+'</div></div>'+
+        '<div class="item-value debit">'+fmt(i.valor)+'</div>'+
+        '<div class="item-actions">'+
+          '<button class="action-btn edit" onclick="abrirModalPrincipal(\'gastos\',\''+i.id+'\')">✏️</button>'+
+          '<button class="action-btn del" onclick="deletarItem(\'gastos\',\''+i.id+'\',renderGastos)">🗑️</button>'+
+        '</div></div>').join('')
     : '<div class="empty-state"><div class="empty-icon">💸</div><div class="empty-text">Nenhum gasto encontrado</div></div>';
 }
 
-// ===== VENDAS =====
 let fvAtual = 'todos';
 window.setFiltroVendas = function(f, el) { fvAtual=f; document.querySelectorAll('#pageVendas .filter-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderVendas(); };
 
@@ -740,20 +805,18 @@ function renderVendas() {
   document.getElementById('vendasQtd').textContent = lista.length;
   const pgIcons = {pix:'💳',dinheiro:'💵',cartao:'💳',fiado:'📒'};
   document.getElementById('listaVendas').innerHTML = filtrada.length
-    ? [...filtrada].reverse().map(i=>`<div class="list-item">
-        <div class="item-icon" style="background:var(--success-dim)">🛒</div>
-        <div class="item-info"><div class="item-name">${i.desc}</div><div class="item-sub">${fmtData(i.data)}${i.cliente?' • '+i.cliente:''}</div></div>
-        <span class="badge ${i.pagamento}">${pgIcons[i.pagamento]||''} ${i.pagamento}</span>
-        <div class="item-value credit">${fmt(i.valor)}</div>
-        <div class="item-actions">
-          <button class="action-btn edit" onclick="abrirModalPrincipal('vendas','${i.id}')">✏️</button>
-          <button class="action-btn del" onclick="deletarItem('vendas','${i.id}',renderVendas)">🗑️</button>
-        </div>
-      </div>`).join('')
+    ? [...filtrada].reverse().map(i=>'<div class="list-item">'+
+        '<div class="item-icon" style="background:var(--success-dim)">🛒</div>'+
+        '<div class="item-info"><div class="item-name">'+i.desc+'</div><div class="item-sub">'+fmtData(i.data)+(i.cliente?' • '+i.cliente:'')+'</div></div>'+
+        '<span class="badge '+i.pagamento+'">'+(pgIcons[i.pagamento]||'')+' '+i.pagamento+'</span>'+
+        '<div class="item-value credit">'+fmt(i.valor)+'</div>'+
+        '<div class="item-actions">'+
+          '<button class="action-btn edit" onclick="abrirModalPrincipal(\'vendas\',\''+i.id+'\')">✏️</button>'+
+          '<button class="action-btn del" onclick="deletarItem(\'vendas\',\''+i.id+'\',renderVendas)">🗑️</button>'+
+        '</div></div>').join('')
     : '<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">Nenhuma venda encontrada</div></div>';
 }
 
-// ===== CASA =====
 function renderCasa() {
   const lista = D('casa')||[];
   const h=hoje(), im=inicioMes();
@@ -762,26 +825,24 @@ function renderCasa() {
   document.getElementById('casaMes').textContent = fmt(lista.filter(i=>i.data>=im).reduce((s,i)=>s+i.valor,0));
   document.getElementById('casaQtd').textContent = lista.length;
   document.getElementById('listaCasa').innerHTML = lista.length
-    ? [...lista].reverse().map(i=>`<div class="list-item">
-        <div class="item-icon" style="background:var(--info-dim)">${catIcons[i.cat]||'🏠'}</div>
-        <div class="item-info"><div class="item-name">${i.desc}</div><div class="item-sub">${fmtData(i.data)}${i.obs?' • '+i.obs:''}</div></div>
-        <div class="item-value debit">${fmt(i.valor)}</div>
-        <div class="item-actions">
-          <button class="action-btn edit" onclick="abrirModalPrincipal('casa','${i.id}')">✏️</button>
-          <button class="action-btn del" onclick="deletarItem('casa','${i.id}',renderCasa)">🗑️</button>
-        </div>
-      </div>`).join('')
+    ? [...lista].reverse().map(i=>'<div class="list-item">'+
+        '<div class="item-icon" style="background:var(--info-dim)">'+(catIcons[i.cat]||'🏠')+'</div>'+
+        '<div class="item-info"><div class="item-name">'+i.desc+'</div><div class="item-sub">'+fmtData(i.data)+(i.obs?' • '+i.obs:'')+'</div></div>'+
+        '<div class="item-value debit">'+fmt(i.valor)+'</div>'+
+        '<div class="item-actions">'+
+          '<button class="action-btn edit" onclick="abrirModalPrincipal(\'casa\',\''+i.id+'\')">✏️</button>'+
+          '<button class="action-btn del" onclick="deletarItem(\'casa\',\''+i.id+'\',renderCasa)">🗑️</button>'+
+        '</div></div>').join('')
     : '<div class="empty-state"><div class="empty-icon">🏠</div><div class="empty-text">Nenhum gasto de casa registrado</div></div>';
 }
 
-// ===== CONTAS =====
 let fcAtual = 'todas';
 window.setFiltroContas = function(f, el) { fcAtual=f; document.querySelectorAll('#pageContas .filter-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderContas(); };
 
 function renderContas() {
   const lista = D('contas')||[];
   const h = hoje();
-  const comStatus = lista.map(i => ({ ...i, statusReal: i.status==='pago'?'pago': i.venc<h?'vencido':'pendente' }));
+  const comStatus = lista.map(i => Object.assign({}, i, { statusReal: i.status==='pago'?'pago': (i.venc<h?'vencido':'pendente') }));
   const pendentes = comStatus.filter(i=>i.statusReal==='pendente');
   const vencidas = comStatus.filter(i=>i.statusReal==='vencido');
   const pagas = comStatus.filter(i=>i.statusReal==='pago');
@@ -792,41 +853,43 @@ function renderContas() {
   const atrasadas = pendentes.length + vencidas.length;
   badge.textContent = atrasadas; badge.style.display = atrasadas?'':'none';
   let filtrada = fcAtual==='todas' ? comStatus : comStatus.filter(i=>i.statusReal===fcAtual);
-  filtrada = [...filtrada].sort((a,b)=>a.venc?.localeCompare(b.venc||''));
+  filtrada = [...filtrada].sort((a,b)=>(a.venc||'').localeCompare(b.venc||''));
   document.getElementById('listaContas').innerHTML = filtrada.length
-    ? filtrada.map(i=>`<div class="list-item">
-        <div class="item-icon" style="background:${i.statusReal==='pago'?'var(--success-dim)':i.statusReal==='vencido'?'var(--danger-dim)':'var(--accent-dim)'}">📋</div>
-        <div class="item-info"><div class="item-name">${i.desc}</div><div class="item-sub">Vence: ${fmtData(i.venc)}${i.obs?' • '+i.obs:''}</div></div>
-        <span class="badge ${i.statusReal}">${i.statusReal}</span>
-        <div class="item-value" style="color:${i.statusReal==='pago'?'var(--success)':i.statusReal==='vencido'?'var(--danger)':'var(--accent)'}">${fmt(i.valor)}</div>
-        <div class="item-actions">
-          ${i.statusReal!=='pago'?`<button class="action-btn edit" onclick="marcarPago('${i.id}')" title="Marcar como pago">✅</button>`:''}
-          <button class="action-btn edit" onclick="abrirModalPrincipal('contas','${i.id}')">✏️</button>
-          <button class="action-btn del" onclick="deletarItem('contas','${i.id}',renderContas)">🗑️</button>
-        </div>
-      </div>`).join('')
+    ? filtrada.map(i=>{
+        const cor = i.statusReal==='pago'?'var(--success-dim)':(i.statusReal==='vencido'?'var(--danger-dim)':'var(--accent-dim)');
+        const corTxt = i.statusReal==='pago'?'var(--success)':(i.statusReal==='vencido'?'var(--danger)':'var(--accent)');
+        return '<div class="list-item">'+
+        '<div class="item-icon" style="background:'+cor+'">📋</div>'+
+        '<div class="item-info"><div class="item-name">'+i.desc+'</div><div class="item-sub">Vence: '+fmtData(i.venc)+(i.obs?' • '+i.obs:'')+'</div></div>'+
+        '<span class="badge '+i.statusReal+'">'+i.statusReal+'</span>'+
+        '<div class="item-value" style="color:'+corTxt+'">'+fmt(i.valor)+'</div>'+
+        '<div class="item-actions">'+
+          (i.statusReal!=='pago'?'<button class="action-btn edit" onclick="marcarPago(\''+i.id+'\')" title="Marcar como pago">✅</button>':'')+
+          '<button class="action-btn edit" onclick="abrirModalPrincipal(\'contas\',\''+i.id+'\')">✏️</button>'+
+          '<button class="action-btn del" onclick="deletarItem(\'contas\',\''+i.id+'\',renderContas)">🗑️</button>'+
+        '</div></div>';
+      }).join('')
     : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">Nenhuma conta encontrada</div></div>';
 }
 
 window.marcarPago = function(id) {
   const lista = D('contas')||[];
   const idx = lista.findIndex(i=>i.id===id);
-  if (idx>=0) { lista[idx].status='pago'; S('contas',lista); renderContas(); showToast('✅ Conta marcada como paga!','success'); }
+  if (idx>=0) { lista[idx].status='pago'; S('contas',lista); renderContas(); renderPainel(); showToast('✅ Conta marcada como paga!','success'); }
 };
 
-// ===== GANHOS =====
 let fgaAtual = 'hoje';
 window.setFiltroGanhos = function(f, el) { fgaAtual=f; document.querySelectorAll('#pageGanhos .filter-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderGanhos(); };
 
 function renderGanhos() {
   const lista = D('ganhos')||[];
   const h=hoje(), sw=semanaAtras(), im=inicioMes();
-  const hoje_ = lista.filter(i=>i.data===h);
-  document.getElementById('ganhosPix').textContent = fmt(hoje_.filter(i=>i.pagamento==='pix').reduce((s,i)=>s+i.valor,0));
-  document.getElementById('ganhosDinheiro').textContent = fmt(hoje_.filter(i=>i.pagamento==='dinheiro').reduce((s,i)=>s+i.valor,0));
-  document.getElementById('ganhosFiado').textContent = fmt(hoje_.filter(i=>i.pagamento==='fiado').reduce((s,i)=>s+i.valor,0));
-  document.getElementById('ganhosCartao').textContent = fmt(hoje_.filter(i=>i.pagamento==='cartao').reduce((s,i)=>s+i.valor,0));
-  document.getElementById('ganhosTotal').textContent = fmt(hoje_.reduce((s,i)=>s+i.valor,0));
+  const hojeLista = lista.filter(i=>i.data===h);
+  document.getElementById('ganhosPix').textContent = fmt(hojeLista.filter(i=>i.pagamento==='pix').reduce((s,i)=>s+i.valor,0));
+  document.getElementById('ganhosDinheiro').textContent = fmt(hojeLista.filter(i=>i.pagamento==='dinheiro').reduce((s,i)=>s+i.valor,0));
+  document.getElementById('ganhosFiado').textContent = fmt(hojeLista.filter(i=>i.pagamento==='fiado').reduce((s,i)=>s+i.valor,0));
+  document.getElementById('ganhosCartao').textContent = fmt(hojeLista.filter(i=>i.pagamento==='cartao').reduce((s,i)=>s+i.valor,0));
+  document.getElementById('ganhosTotal').textContent = fmt(hojeLista.reduce((s,i)=>s+i.valor,0));
   let filtrada = lista.filter(i => {
     if (fgaAtual==='hoje') return i.data===h;
     if (fgaAtual==='semana') return i.data>=sw;
@@ -836,27 +899,25 @@ function renderGanhos() {
   });
   const pgIcons = {pix:'💳 Pix',dinheiro:'💵 Dinheiro',fiado:'📒 Fiado',cartao:'💳 Cartão'};
   document.getElementById('listaGanhos').innerHTML = filtrada.length
-    ? [...filtrada].reverse().map(i=>`<div class="list-item">
-        <div class="item-icon" style="background:var(--success-dim)">💰</div>
-        <div class="item-info"><div class="item-name">${i.desc}</div><div class="item-sub">${fmtData(i.data)}${i.cliente?' • '+i.cliente:''}${i.pagamento==='fiado'&&i.fiadoPago!=='sim'?' • <span style="color:var(--accent)">Fiado pendente</span>':''}</div></div>
-        <span class="badge ${i.pagamento}">${pgIcons[i.pagamento]||i.pagamento}</span>
-        <div class="item-value credit">${fmt(i.valor)}</div>
-        <div class="item-actions">
-          ${i.pagamento==='fiado'&&i.fiadoPago!=='sim'?`<button class="action-btn edit" onclick="marcarFiadoPago('${i.id}')" title="Marcar fiado como recebido">✅</button>`:''}
-          <button class="action-btn edit" onclick="abrirModalPrincipal('ganhos','${i.id}')">✏️</button>
-          <button class="action-btn del" onclick="deletarItem('ganhos','${i.id}',renderGanhos)">🗑️</button>
-        </div>
-      </div>`).join('')
+    ? [...filtrada].reverse().map(i=>'<div class="list-item">'+
+        '<div class="item-icon" style="background:var(--success-dim)">💰</div>'+
+        '<div class="item-info"><div class="item-name">'+i.desc+'</div><div class="item-sub">'+fmtData(i.data)+(i.cliente?' • '+i.cliente:'')+(i.pagamento==='fiado'&&i.fiadoPago!=='sim'?' • <span style="color:var(--accent)">Fiado pendente</span>':'')+'</div></div>'+
+        '<span class="badge '+i.pagamento+'">'+(pgIcons[i.pagamento]||i.pagamento)+'</span>'+
+        '<div class="item-value credit">'+fmt(i.valor)+'</div>'+
+        '<div class="item-actions">'+
+          (i.pagamento==='fiado'&&i.fiadoPago!=='sim'?'<button class="action-btn edit" onclick="marcarFiadoPago(\''+i.id+'\')" title="Marcar fiado como recebido">✅</button>':'')+
+          '<button class="action-btn edit" onclick="abrirModalPrincipal(\'ganhos\',\''+i.id+'\')">✏️</button>'+
+          '<button class="action-btn del" onclick="deletarItem(\'ganhos\',\''+i.id+'\',renderGanhos)">🗑️</button>'+
+        '</div></div>').join('')
     : '<div class="empty-state"><div class="empty-icon">💰</div><div class="empty-text">Nenhum recebimento no período</div></div>';
 }
 
 window.marcarFiadoPago = function(id) {
   const lista = D('ganhos')||[];
   const idx = lista.findIndex(i=>i.id===id);
-  if (idx>=0) { lista[idx].fiadoPago='sim'; S('ganhos',lista); renderGanhos(); showToast('✅ Fiado marcado como recebido!','success'); }
+  if (idx>=0) { lista[idx].fiadoPago='sim'; S('ganhos',lista); renderGanhos(); renderPainel(); showToast('✅ Fiado marcado como recebido!','success'); }
 };
 
-// ===== AGENDA / DIÁRIO =====
 function renderAgenda() {
   renderCalendario();
   carregarNota(diaSelecionado);
@@ -870,12 +931,12 @@ function renderCalendario() {
   const diasNoMes = new Date(ano, mes+1, 0).getDate();
   const notas = D('notas')||{};
   const h = hoje();
-  let html = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d=>`<div class="cal-day-name">${d}</div>`).join('');
+  let html = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d=>'<div class="cal-day-name">'+d+'</div>').join('');
   for (let i=0; i<primeiroDia; i++) html += '<div class="cal-day empty"></div>';
   for (let d=1; d<=diasNoMes; d++) {
-    const dateStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dateStr = ano+'-'+String(mes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     const isToday = dateStr===h, isSel = dateStr===diaSelecionado, hasNote = notas[dateStr];
-    html += `<div class="cal-day${isToday?' today':''}${isSel?' selected':''}${hasNote?' has-note':''}" onclick="selecionarDia('${dateStr}')">${d}</div>`;
+    html += '<div class="cal-day'+(isToday?' today':'')+(isSel?' selected':'')+(hasNote?' has-note':'')+'" onclick="selecionarDia(\''+dateStr+'\')">'+d+'</div>';
   }
   document.getElementById('calGrid').innerHTML = html;
 }
@@ -889,8 +950,8 @@ window.selecionarDia = function(date) {
 
 function carregarNota(date) {
   const notas = D('notas')||{};
-  const [y,m,d] = date.split('-');
-  document.getElementById('noteDateTitle').textContent = `${d}/${m}/${y}`;
+  const partes = date.split('-');
+  document.getElementById('noteDateTitle').textContent = partes[2]+'/'+partes[1]+'/'+partes[0];
   document.getElementById('noteTextarea').value = notas[date]||'';
 }
 
@@ -911,7 +972,6 @@ window.limparNota = function() {
   renderCalendario();
 };
 
-// ===== COMPROMISSOS =====
 let fcoAtual = 'todos';
 window.setFiltroComp = function(f, el) { fcoAtual=f; document.querySelectorAll('#pageCompromissos .filter-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderCompromissos(); };
 
@@ -921,63 +981,63 @@ function renderCompromissos() {
   if (fcoAtual==='hoje') lista = lista.filter(i=>i.data===h);
   else if (fcoAtual==='pendente') lista = lista.filter(i=>!i.done);
   else if (fcoAtual==='feito') lista = lista.filter(i=>i.done);
-  lista = [...lista].sort((a,b)=>a.data?.localeCompare(b.data||'')||a.hora?.localeCompare(b.hora||''));
-  const urgClass = {alta:'alta',media:'media',baixa:'baixa'};
+  lista = [...lista].sort((a,b)=>(a.data||'').localeCompare(b.data||'')||(a.hora||'').localeCompare(b.hora||''));
   const urgLabel = {alta:'🔴 Alta',media:'🟡 Média',baixa:'🟢 Baixa'};
   document.getElementById('listaCompromissos').innerHTML = lista.length
-    ? lista.map(i=>`<div class="comp-item${i.done?' done':''}">
-        <div class="comp-check${i.done?' checked':''}" onclick="toggleComp('${i.id}')">${i.done?'✓':''}</div>
-        <div class="comp-time">${i.data?fmtData(i.data):''}${i.hora?'<br>'+i.hora:''}</div>
-        <div class="comp-info"><div class="comp-title">${i.desc}</div>${i.local||i.obs?`<div class="comp-detail">${i.local?'📍 '+i.local:''}${i.obs?' • '+i.obs:''}</div>`:''}</div>
-        <span class="comp-urgencia ${urgClass[i.urgencia]||'media'}">${urgLabel[i.urgencia]||'Média'}</span>
-        <div class="item-actions">
-          <button class="action-btn edit" onclick="abrirModalPrincipal('compromissos','${i.id}')">✏️</button>
-          <button class="action-btn del" onclick="deletarItem('compromissos','${i.id}',()=>{renderCompromissos();atualizarBadges()})">🗑️</button>
-        </div>
-      </div>`).join('')
+    ? lista.map(i=>'<div class="comp-item'+(i.done?' done':'')+'">'+
+        '<div class="comp-check'+(i.done?' checked':'')+'" onclick="toggleComp(\''+i.id+'\')">'+(i.done?'✓':'')+'</div>'+
+        '<div class="comp-time">'+(i.data?fmtData(i.data):'')+(i.hora?'<br>'+i.hora:'')+'</div>'+
+        '<div class="comp-info"><div class="comp-title">'+i.desc+'</div>'+((i.local||i.obs)?'<div class="comp-detail">'+(i.local?'📍 '+i.local:'')+(i.obs?' • '+i.obs:'')+'</div>':'')+'</div>'+
+        '<span class="comp-urgencia '+(i.urgencia||'media')+'">'+(urgLabel[i.urgencia]||'Média')+'</span>'+
+        '<div class="item-actions">'+
+          '<button class="action-btn edit" onclick="abrirModalPrincipal(\'compromissos\',\''+i.id+'\')">✏️</button>'+
+          '<button class="action-btn del" onclick="deletarItem(\'compromissos\',\''+i.id+'\',function(){renderCompromissos();atualizarBadges();})">🗑️</button>'+
+        '</div></div>').join('')
     : '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Nenhum compromisso encontrado</div></div>';
 }
 
 window.toggleComp = function(id) {
   const lista = D('compromissos')||[];
   const idx = lista.findIndex(i=>i.id===id);
-  if (idx>=0) { lista[idx].done=!lista[idx].done; S('compromissos',lista); renderCompromissos(); atualizarBadges(); }
+  if (idx>=0) { lista[idx].done=!lista[idx].done; S('compromissos',lista); renderCompromissos(); atualizarBadges(); renderPainel(); }
 };
 
-// ===== CONTATOS =====
 let fctAtual = 'todos';
 window.setFiltroContatos = function(f, el) { fctAtual=f; document.querySelectorAll('#pageContatos .filter-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderContatos(); };
 
 const avatarColors = ['#00d4aa','#f0a500','#79c0ff','#ff5555','#3dd68c','#ff79c6','#bd93f9'];
 window.renderContatos = function() {
   let lista = D('contatos')||[];
-  const busca = document.getElementById('buscaContato')?.value?.toLowerCase()||'';
-  if (busca) lista = lista.filter(i=>i.desc?.toLowerCase().includes(busca)||i.tel?.includes(busca)||i.empresa?.toLowerCase().includes(busca));
+  const buscaEl = document.getElementById('buscaContato');
+  const busca = buscaEl ? buscaEl.value.toLowerCase() : '';
+  if (busca) lista = lista.filter(i=>(i.desc||'').toLowerCase().includes(busca)||(i.tel||'').includes(busca)||(i.empresa||'').toLowerCase().includes(busca));
   if (fctAtual!=='todos') lista = lista.filter(i=>i.tipo===fctAtual);
-  lista = [...lista].sort((a,b)=>a.desc?.localeCompare(b.desc||''));
+  lista = [...lista].sort((a,b)=>(a.desc||'').localeCompare(b.desc||''));
   const tipoLabel = {fornecedor:'📦 Fornecedor',cliente:'👤 Cliente',parceiro:'🤝 Parceiro',importante:'⭐ Importante'};
   document.getElementById('listaContatos').innerHTML = lista.length
-    ? lista.map((i,idx)=>`<div class="contato-card">
-        <div class="contato-avatar" style="background:${avatarColors[idx%avatarColors.length]}20;color:${avatarColors[idx%avatarColors.length]}">${i.desc?.charAt(0)?.toUpperCase()||'?'}</div>
-        <div class="contato-info">
-          <div class="contato-nome">${i.desc}</div>
-          ${i.empresa?`<div class="contato-cargo">${tipoLabel[i.tipo]||''} ${i.empresa?'• '+i.empresa:''}</div>`:`<div class="contato-cargo">${tipoLabel[i.tipo]||''}</div>`}
-          <div class="contato-tel">${i.tel}</div>
-        </div>
-        <div class="contato-actions">
-          <button class="btn-tel" onclick="ligar('${i.tel}')">📞 Ligar</button>
-          ${i.wpp?`<button class="btn-wpp" onclick="abrirWpp('${i.wpp}','${i.desc}')">💬 WhatsApp</button>`:''}
-          <button class="action-btn edit" onclick="abrirModalPrincipal('contatos','${i.id}')">✏️</button>
-          <button class="action-btn del" onclick="deletarItem('contatos','${i.id}',renderContatos)">🗑️</button>
-        </div>
-      </div>`).join('')
+    ? lista.map((i,idx)=>{
+        const cor = avatarColors[idx%avatarColors.length];
+        const inicial = i.desc ? i.desc.charAt(0).toUpperCase() : '?';
+        return '<div class="contato-card">'+
+        '<div class="contato-avatar" style="background:'+cor+'20;color:'+cor+'">'+inicial+'</div>'+
+        '<div class="contato-info">'+
+          '<div class="contato-nome">'+i.desc+'</div>'+
+          '<div class="contato-cargo">'+(tipoLabel[i.tipo]||'')+(i.empresa?' • '+i.empresa:'')+'</div>'+
+          '<div class="contato-tel">'+i.tel+'</div>'+
+        '</div>'+
+        '<div class="contato-actions">'+
+          '<button class="btn-tel" onclick="ligar(\''+i.tel+'\')">📞 Ligar</button>'+
+          (i.wpp?'<button class="btn-wpp" onclick="abrirWpp(\''+i.wpp+'\',\''+i.desc+'\')">💬 WhatsApp</button>':'')+
+          '<button class="action-btn edit" onclick="abrirModalPrincipal(\'contatos\',\''+i.id+'\')">✏️</button>'+
+          '<button class="action-btn del" onclick="deletarItem(\'contatos\',\''+i.id+'\',renderContatos)">🗑️</button>'+
+        '</div></div>';
+      }).join('')
     : '<div class="empty-state"><div class="empty-icon">📞</div><div class="empty-text">Nenhum contato encontrado</div></div>';
 };
 
 window.ligar = function(tel) { window.open('tel:'+tel.replace(/\D/g,'')); };
-window.abrirWpp = function(num, nome) { window.open(`https://wa.me/${num.replace(/\D/g,'')}?text=Olá ${nome}!`,'_blank'); };
+window.abrirWpp = function(num, nome) { window.open('https://wa.me/'+num.replace(/\D/g,'')+'?text=Olá '+nome+'!','_blank'); };
 
-// ===== BADGES =====
 function atualizarBadges() {
   const comps = (D('compromissos')||[]).filter(i=>!i.done);
   const bc = document.getElementById('badgeComp');
@@ -987,11 +1047,174 @@ function atualizarBadges() {
   bco.textContent = contas.length; bco.style.display = contas.length?'':'none';
 }
 
-// ===== INIT =====
+let graficoSemanaChart = null;
+let periodoGrafico = 'semana';
+
+window.setPeriodoGrafico = function(p, el) {
+  periodoGrafico = p;
+  document.querySelectorAll('#pagePainel .filter-row .filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('graficoTitulo').textContent = p==='semana'
+    ? '📊 Últimos 7 dias — Receitas x Gastos'
+    : '📊 Este mês (por dia) — Receitas x Gastos';
+  renderPainel();
+};
+
+
+function renderPainel() {
+  const gastos = D('gastos')||[];
+  const vendas = D('vendas')||[];
+  const ganhos = D('ganhos')||[];
+  const contas = D('contas')||[];
+  const comps = D('compromissos')||[];
+
+  const h = hoje();
+  const ontem = (() => { const d=new Date(); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+  const im = inicioMes();
+
+  const somaDia = (lista,data) => lista.filter(i=>i.data===data).reduce((s,i)=>s+i.valor,0);
+  const somaMes = (lista) => lista.filter(i=>i.data>=im).reduce((s,i)=>s+i.valor,0);
+
+  const vendasHoje = somaDia(vendas,h);
+  const ganhosHoje = somaDia(ganhos,h);
+  const gastosHoje = somaDia(gastos,h);
+  const casaHoje = somaDia(D('casa')||[],h);
+
+  const vendasOntem = somaDia(vendas,ontem);
+  const gastosOntem = somaDia(gastos,ontem);
+
+  const saldoHoje = vendasHoje + ganhosHoje - gastosHoje - casaHoje;
+  document.getElementById('painelSaldoHoje').textContent = fmt(saldoHoje);
+  document.getElementById('painelSaldoHoje').style.color = saldoHoje>=0 ? 'var(--primary)' : 'var(--danger)';
+
+  const receitasMes = somaMes(vendas) + somaMes(ganhos);
+  const despesasMes = somaMes(gastos) + somaMes(D('casa')||[]);
+  const saldoMes = receitasMes - despesasMes;
+  document.getElementById('painelSaldoMes').textContent = fmt(saldoMes);
+  document.getElementById('painelSaldoMes').style.color = saldoMes>=0 ? 'var(--primary)' : 'var(--danger)';
+
+  document.getElementById('painelVendasHoje').textContent = fmt(vendasHoje);
+  document.getElementById('painelGastosHoje').textContent = fmt(gastosHoje);
+
+  function compTexto(hojeVal, ontemVal) {
+    if (ontemVal===0 && hojeVal===0) return 'sem dados ontem';
+    if (ontemVal===0) return '🔼 sem registro ontem';
+    const diff = ((hojeVal-ontemVal)/ontemVal)*100;
+    const seta = diff>=0 ? '🔼' : '🔽';
+    return seta+' '+Math.abs(diff).toFixed(0)+'% vs. ontem';
+  }
+  document.getElementById('painelVendasComp').textContent = compTexto(vendasHoje, vendasOntem);
+  document.getElementById('painelGastosComp').textContent = compTexto(gastosHoje, gastosOntem);
+
+  const fiadoPend = ganhos.filter(i=>i.pagamento==='fiado' && i.fiadoPago!=='sim');
+  document.getElementById('painelFiadoPendente').textContent = fmt(fiadoPend.reduce((s,i)=>s+i.valor,0));
+  document.getElementById('painelFiadoQtd').textContent = fiadoPend.length+' registro(s)';
+
+  const em7dias = (() => { const d=new Date(); d.setDate(d.getDate()+7); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+  const aVencer = contas.filter(i=>i.status!=='pago' && i.venc>=h && i.venc<=em7dias);
+  const vencidas = contas.filter(i=>i.status!=='pago' && i.venc<h);
+  document.getElementById('painelContasVencer').textContent = fmt(aVencer.reduce((s,i)=>s+i.valor,0));
+  document.getElementById('painelContasVencerQtd').textContent = aVencer.length+' conta(s)';
+  document.getElementById('painelContasVencidas').textContent = fmt(vencidas.reduce((s,i)=>s+i.valor,0));
+  document.getElementById('painelContasVencidasQtd').textContent = vencidas.length+' conta(s)';
+
+  const compsHoje = comps.filter(i=>i.data===h && !i.done);
+  document.getElementById('painelCompHoje').textContent = compsHoje.length;
+  if (compsHoje.length) {
+    const ordenados = [...compsHoje].sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+    document.getElementById('painelCompProx').textContent = ordenados[0].desc + (ordenados[0].hora?' às '+ordenados[0].hora:'');
+  } else {
+    document.getElementById('painelCompProx').textContent = 'Nenhum agendado';
+  }
+
+  // Últimas vendas
+  const ultimasVendas = [...vendas].reverse().slice(0,5);
+  document.getElementById('painelUltimasVendas').innerHTML = ultimasVendas.length
+    ? ultimasVendas.map(i=>'<div class="list-item">'+
+        '<div class="item-icon" style="background:var(--success-dim)">🛒</div>'+
+        '<div class="item-info"><div class="item-name">'+i.desc+'</div><div class="item-sub">'+fmtData(i.data)+(i.cliente?' • '+i.cliente:'')+'</div></div>'+
+        '<div class="item-value credit">'+fmt(i.valor)+'</div></div>').join('')
+    : '<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">Nenhuma venda ainda</div></div>';
+
+  // Próximos compromissos (não concluídos, ordenados por data)
+  const proximos = [...comps].filter(i=>!i.done).sort((a,b)=>(a.data||'').localeCompare(b.data||'')||(a.hora||'').localeCompare(b.hora||'')).slice(0,5);
+  const urgLabel = {alta:'🔴',media:'🟡',baixa:'🟢'};
+  document.getElementById('painelProximosComp').innerHTML = proximos.length
+    ? proximos.map(i=>'<div class="list-item">'+
+        '<div class="item-icon" style="background:var(--info-dim)">'+(urgLabel[i.urgencia]||'🟡')+'</div>'+
+        '<div class="item-info"><div class="item-name">'+i.desc+'</div><div class="item-sub">'+fmtData(i.data)+(i.hora?' às '+i.hora:'')+(i.local?' • '+i.local:'')+'</div></div></div>').join('')
+    : '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Nenhum compromisso</div></div>';
+
+  // Gráfico: semana (7 dias) ou mês (todos os dias do mês até hoje)
+  const dias = [];
+  if (periodoGrafico==='semana') {
+    for (let i=6;i>=0;i--) {
+      const d = new Date(); d.setDate(d.getDate()-i);
+      dias.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
+    }
+  } else {
+    const hoje_d = new Date();
+    const totalDias = hoje_d.getDate();
+    for (let i=1;i<=totalDias;i++) {
+      dias.push(hoje_d.getFullYear()+'-'+String(hoje_d.getMonth()+1).padStart(2,'0')+'-'+String(i).padStart(2,'0'));
+    }
+  }
+  const labelsDias = dias.map(dt => { const p=dt.split('-'); return p[2]+'/'+p[1]; });
+  const dadosVendas = dias.map(dt => somaDia(vendas,dt) + somaDia(ganhos,dt));
+  const dadosGastos = dias.map(dt => somaDia(gastos,dt) + somaDia(D('casa')||[],dt));
+
+  const ctx = document.getElementById('graficoSemana');
+  if (ctx && window.Chart) {
+    if (graficoSemanaChart) graficoSemanaChart.destroy();
+    graficoSemanaChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labelsDias,
+        datasets: [
+          { label:'Receitas', data: dadosVendas, backgroundColor:'#3dd68c', borderRadius:6 },
+          { label:'Gastos', data: dadosGastos, backgroundColor:'#ff5555', borderRadius:6 }
+        ]
+      },
+      options: {
+        responsive:true,
+        plugins:{ legend:{ labels:{ color:'#8b949e' } } },
+        scales:{
+          x:{ ticks:{ color:'#8b949e', maxRotation:0, autoSkip:true, maxTicksLimit:periodoGrafico==='semana'?7:10 }, grid:{ color:'rgba(255,255,255,.05)' } },
+          y:{ ticks:{ color:'#8b949e' }, grid:{ color:'rgba(255,255,255,.05)' } }
+        }
+      }
+    });
+  }
+
+  // Resumo do mês
+  const vendasMesLista = vendas.filter(i=>i.data>=im);
+  const ganhosMesLista = ganhos.filter(i=>i.data>=im);
+  const gastosMesLista = gastos.filter(i=>i.data>=im);
+  const casaMesLista = (D('casa')||[]).filter(i=>i.data>=im);
+
+  const totalVendasMes = vendasMesLista.reduce((s,i)=>s+i.valor,0);
+  const totalGanhosMes = ganhosMesLista.reduce((s,i)=>s+i.valor,0);
+  const totalGastosMes = gastosMesLista.reduce((s,i)=>s+i.valor,0);
+  const totalCasaMes = casaMesLista.reduce((s,i)=>s+i.valor,0);
+  const lucroMes = totalVendasMes + totalGanhosMes - totalGastosMes - totalCasaMes;
+
+  document.getElementById('resumoMesVendas').textContent = fmt(totalVendasMes);
+  document.getElementById('resumoMesVendasQtd').textContent = vendasMesLista.length+' venda(s)';
+  document.getElementById('resumoMesGanhos').textContent = fmt(totalGanhosMes);
+  document.getElementById('resumoMesGanhosQtd').textContent = ganhosMesLista.length+' registro(s)';
+  document.getElementById('resumoMesGastos').textContent = fmt(totalGastosMes);
+  document.getElementById('resumoMesGastosQtd').textContent = gastosMesLista.length+' registro(s)';
+  document.getElementById('resumoMesCasa').textContent = fmt(totalCasaMes);
+  document.getElementById('resumoMesCasaQtd').textContent = casaMesLista.length+' registro(s)';
+  const lucroEl = document.getElementById('resumoMesLucro');
+  lucroEl.textContent = fmt(lucroMes);
+  lucroEl.style.color = lucroMes>=0 ? 'var(--success)' : 'var(--danger)';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   const now = new Date();
   document.getElementById('userDate').textContent = now.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'});
-  renderGastos();
+  renderPainel();
   renderAgenda();
   atualizarBadges();
   setInterval(atualizarBadges, 30000);
