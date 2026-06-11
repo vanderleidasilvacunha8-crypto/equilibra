@@ -178,6 +178,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </head>
 <body>
 
+<!-- TELA DE LOGIN -->
+<div id="loginScreen" style="display:none;position:fixed;inset:0;z-index:2000;background:var(--bg);align-items:center;justify-content:center;padding:1.5rem">
+  <div style="width:100%;max-width:380px">
+    <div style="text-align:center;margin-bottom:2rem">
+      <div style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--primary)">Meu Controle</div>
+      <div style="font-size:.85rem;color:var(--text2);margin-top:.25rem">Gestão do seu negócio</div>
+    </div>
+    <div class="card" style="padding:1.75rem;border-radius:16px">
+      <div style="text-align:center;font-size:2.5rem;margin-bottom:.75rem">🔐</div>
+      <div style="text-align:center;font-size:1rem;font-weight:700;color:var(--text);margin-bottom:1.5rem">Acesse sua conta</div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Usuário</label>
+        <input class="form-input" id="loginUser" placeholder="Digite seu usuário" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
+      </div>
+      <div class="form-group" style="margin-bottom:1.25rem">
+        <label class="form-label">Senha</label>
+        <input class="form-input" id="loginPass" type="password" placeholder="Digite sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()">
+      </div>
+      <button class="btn-primary" style="width:100%;justify-content:center;padding:.8rem" onclick="fazerLogin()">Entrar</button>
+      <div id="loginErro" style="display:none;text-align:center;color:var(--danger);font-size:.8rem;font-weight:600;margin-top:.85rem">❌ Usuário ou senha incorretos</div>
+      <label style="display:flex;align-items:center;gap:.5rem;margin-top:1.25rem;font-size:.8rem;color:var(--text2);cursor:pointer">
+        <input type="checkbox" id="loginLembrar" checked style="accent-color:var(--primary);width:16px;height:16px"> Manter conectado neste aparelho
+      </label>
+    </div>
+    <div style="text-align:center;font-size:.72rem;color:var(--text3);margin-top:1.25rem">Seus dados ficam salvos neste dispositivo</div>
+  </div>
+</div>
+
 <div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>
 
 <div class="sidebar" id="sidebar">
@@ -221,13 +249,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
   </nav>
   <div class="sidebar-footer">
-    <div class="user-info">
+    <div class="user-info" style="margin-bottom:.75rem">
       <div class="user-avatar" id="userAvatar">M</div>
       <div>
         <div class="user-name" id="userName">Meu Negócio</div>
         <div class="user-date" id="userDate"></div>
       </div>
     </div>
+    <button class="btn-ghost" style="width:100%;justify-content:center;display:flex;align-items:center;gap:.4rem" onclick="fazerLogout()">🚪 Sair</button>
   </div>
 </div>
 
@@ -513,6 +542,50 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <div class="toast" id="toast"></div>
 
 <script>
+// ============================================================
+// LOGIN SIMPLES (offline) — TROQUE usuário e senha aqui embaixo:
+const USUARIO_LOGIN = 'vanderlei';
+const SENHA_LOGIN   = '1234';
+// ============================================================
+
+function verificarLogin() {
+  const logado = sessionStorage.getItem('mc_logado') === 'sim' || localStorage.getItem('mc_logado') === 'sim';
+  if (logado) {
+    document.getElementById('loginScreen').style.display = 'none';
+    iniciarApp();
+  } else {
+    document.getElementById('loginScreen').style.display = 'flex';
+  }
+}
+
+window.fazerLogin = function() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  if (u === USUARIO_LOGIN && p === SENHA_LOGIN) {
+    document.getElementById('loginErro').style.display = 'none';
+    if (document.getElementById('loginLembrar').checked) {
+      localStorage.setItem('mc_logado','sim');
+    } else {
+      sessionStorage.setItem('mc_logado','sim');
+    }
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('loginPass').value = '';
+    iniciarApp();
+  } else {
+    document.getElementById('loginErro').style.display = 'block';
+  }
+};
+
+window.fazerLogout = function() {
+  if (!confirm('Deseja sair da sua conta?')) return;
+  localStorage.removeItem('mc_logado');
+  sessionStorage.removeItem('mc_logado');
+  closeSidebar();
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginScreen').style.display = 'flex';
+};
+
 let paginaAtual = 'gastos';
 let calDate = new Date();
 let modalTipo = '';
@@ -1039,11 +1112,12 @@ window.ligar = function(tel) { window.open('tel:'+tel.replace(/\D/g,'')); };
 window.abrirWpp = function(num, nome) { window.open('https://wa.me/'+num.replace(/\D/g,'')+'?text=Olá '+nome+'!','_blank'); };
 
 function atualizarBadges() {
-  const comps = (D('compromissos')||[]).filter(i=>!i.done);
   const bc = document.getElementById('badgeComp');
+  const bco = document.getElementById('badgeContas');
+  if (!bc || !bco) return;
+  const comps = (D('compromissos')||[]).filter(i=>!i.done);
   bc.textContent = comps.length; bc.style.display = comps.length?'':'none';
   const contas = (D('contas')||[]).filter(i=>i.status!=='pago');
-  const bco = document.getElementById('badgeContas');
   bco.textContent = contas.length; bco.style.display = contas.length?'':'none';
 }
 
@@ -1211,12 +1285,16 @@ function renderPainel() {
   lucroEl.style.color = lucroMes>=0 ? 'var(--success)' : 'var(--danger)';
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+function iniciarApp() {
   const now = new Date();
   document.getElementById('userDate').textContent = now.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'});
   renderPainel();
   renderAgenda();
   atualizarBadges();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  verificarLogin();
   setInterval(atualizarBadges, 30000);
 });
 </script>
