@@ -724,6 +724,9 @@ window.fazerLogin = function() {
         else if (err.code==='auth/weak-password')        msg='❌ A senha precisa ter no mínimo 6 caracteres';
         else if (err.code==='auth/network-request-failed') msg='📴 Sem internet — tente de novo';
         else if (err.code==='auth/too-many-requests')    msg='⏳ Muitas tentativas, aguarde um pouco';
+        else if (err.code==='auth/operation-not-allowed') msg='⚠️ Ative "E-mail/senha" no Firebase (Authentication)';
+        else if (err.code==='auth/configuration-not-found') msg='⚠️ Authentication não configurado no Firebase';
+        else if (err.code)                               msg='❌ Erro: '+err.code;
         erro.textContent = msg; erro.style.display='block';
         setSyncStatus('offline');
       });
