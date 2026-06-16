@@ -702,9 +702,17 @@ window.fazerLogin = function() {
     firebase.auth().setPersistence(persist)
       .then(() => firebase.auth().signInWithEmailAndPassword(email, p))
       .catch(err => {
-        if (err.code === 'auth/user-not-found') {
-          // primeiro acesso: cria a conta automaticamente
-          return firebase.auth().createUserWithEmailAndPassword(email, p);
+        // Projetos novos do Firebase tem "protecao contra enumeracao de e-mail":
+        // conta inexistente vem como invalid-credential (e nao user-not-found).
+        if (err.code === 'auth/user-not-found' ||
+            err.code === 'auth/invalid-credential' ||
+            err.code === 'auth/invalid-login-credentials') {
+          // 1o acesso: tenta criar a conta. Se ja existir, era senha errada.
+          return firebase.auth().createUserWithEmailAndPassword(email, p)
+            .catch(err2 => {
+              if (err2.code === 'auth/email-already-in-use') throw { code:'auth/wrong-password' };
+              throw err2;
+            });
         }
         throw err;
       })
