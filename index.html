@@ -312,6 +312,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
     </div>
     <div id="syncStatus" style="font-size:.68rem;font-weight:600;color:var(--text2);text-align:center;margin-bottom:.6rem">⚪ Carregando…</div>
+    <button class="btn-ghost" style="width:100%;justify-content:center;display:flex;align-items:center;gap:.4rem;margin-bottom:.5rem" onclick="abrirBackup()">💾 Backup</button>
     <button class="btn-ghost" style="width:100%;justify-content:center;display:flex;align-items:center;gap:.4rem" onclick="fazerLogout()">🚪 Sair</button>
   </div>
 </div>
@@ -613,6 +614,26 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 <div class="toast" id="toast"></div>
 
+<div class="modal-overlay" id="modalBackup">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">💾 Backup e recuperação</div>
+      <button class="modal-close" onclick="fecharModal('modalBackup')">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.7rem">
+      <button class="btn-primary" style="justify-content:center" onclick="baixarBackup()">📥 Baixar backup (salvar arquivo)</button>
+      <label class="btn-ghost" style="justify-content:center;text-align:center;cursor:pointer;display:block;width:100%">
+        📤 Restaurar de um arquivo
+        <input type="file" accept=".json,application/json" style="display:none" onchange="restaurarArquivo(this)">
+      </label>
+      <div style="border-top:1px solid var(--border);margin:.3rem 0"></div>
+      <div style="font-size:.8rem;font-weight:700;color:var(--text2)">🕘 Backups automáticos</div>
+      <div style="font-size:.72rem;color:var(--text3);margin-top:-.3rem">Guardados sozinhos antes de cada exclusão. Recupere algo apagado sem querer.</div>
+      <div id="listaSnapshots" style="display:flex;flex-direction:column;gap:.5rem;max-height:240px;overflow:auto;margin-top:.2rem"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 // ☁️ SINCRONIZACAO NA NUVEM (Firebase)
@@ -670,12 +691,38 @@ function initCloud() {
   } catch(e) { console.error('Firebase init falhou:', e); cloudOn = false; }
 }
 
+// --- fila de alterações pendentes (sobrevive ao fechar o app) ---
+function getPending(){ try{ return JSON.parse(localStorage.getItem('mc_pending')||'[]'); }catch(e){ return []; } }
+function setPendingList(arr){ localStorage.setItem('mc_pending', JSON.stringify(Array.from(new Set(arr)))); }
+function markPending(k){ const p=getPending(); if(p.indexOf(k)===-1){ p.push(k); setPendingList(p); } }
+function clearPending(k){ setPendingList(getPending().filter(function(x){return x!==k;})); }
+
+// mescla dados local + nuvem SEM perder o que foi adicionado offline
+function mergeData(local, remote){
+  // listas de itens com id -> união por id (versão local prevalece em conflito)
+  if (Array.isArray(local) || Array.isArray(remote)) {
+    const L = Array.isArray(local)?local:[];
+    const R = Array.isArray(remote)?remote:[];
+    const map = new Map();
+    R.forEach(function(it){ if(it&&it.id!=null) map.set(it.id,it); });
+    L.forEach(function(it){ if(it&&it.id!=null) map.set(it.id,it); });
+    const semId = R.filter(function(it){return !it||it.id==null;}).concat(L.filter(function(it){return !it||it.id==null;}));
+    return Array.from(map.values()).concat(semId);
+  }
+  // notas (objeto data->texto): mescla, local prevalece
+  if (local && typeof local==='object' && remote && typeof remote==='object') {
+    return Object.assign({}, remote, local);
+  }
+  return (local!=null)?local:remote;
+}
+
 function pushCloud(key, val) {
-  if (!cloudOn || !authUser) return;
+  if (!cloudOn || !authUser) { markPending(key); return; }
+  markPending(key);
   setSyncStatus('saving');
   db.ref('users/'+authUser.uid+'/'+key).set(val)
-    .then(()  => setSyncStatus('sync'))
-    .catch(() => setSyncStatus('offline'));
+    .then(function(){ clearPending(key); setSyncStatus(getPending().length?'saving':'sync'); })
+    .catch(function(){ setSyncStatus('offline'); }); // continua pendente, reenvia ao reconectar
 }
 
 function iniciarSync(user) {
@@ -684,28 +731,30 @@ function iniciarSync(user) {
   primeiraSync = true;
   if (syncRef) syncRef.off();
   syncRef = db.ref('users/'+user.uid);
-  syncRef.on('value', snap => {
+  syncRef.on('value', function(snap){
     const remoto = snap.val() || {};
+    const pend = getPending();
     aplicandoRemoto = true;
-    if (primeiraSync) {
-      // 1a vez: o que existe na nuvem ganha; o que so existe aqui sobe pra nuvem
-      SYNC_KEYS.forEach(k => {
-        if (remoto[k] !== undefined && remoto[k] !== null) {
-          setLocal(k, remoto[k]);
-        } else {
-          const local = D(k);
-          if (local !== null) { aplicandoRemoto = false; pushCloud(k, local); aplicandoRemoto = true; }
-        }
-      });
-      primeiraSync = false;
-    } else {
-      // mudou em outro aparelho -> atualiza aqui
-      SYNC_KEYS.forEach(k => { if (remoto[k] !== undefined) setLocal(k, remoto[k]); });
-    }
+    SYNC_KEYS.forEach(function(k){
+      const localVal  = D(k);
+      const remoteVal = (remoto[k]!==undefined && remoto[k]!==null) ? remoto[k] : null;
+      if (pend.indexOf(k)!==-1) {
+        // alteração local ainda NÃO confirmada na nuvem -> mescla e reenvia (nunca perde)
+        const merged = mergeData(localVal, remoteVal);
+        setLocal(k, merged);
+        if (JSON.stringify(merged) !== JSON.stringify(remoteVal)) pushCloud(k, merged);
+        else clearPending(k);
+      } else if (remoteVal !== null) {
+        setLocal(k, remoteVal);          // nuvem manda
+      } else if (localVal !== null) {
+        pushCloud(k, localVal);          // semeia a nuvem com o que já existe aqui
+      }
+    });
     aplicandoRemoto = false;
-    setSyncStatus('sync');
+    primeiraSync = false;
+    setSyncStatus(getPending().length?'saving':'sync');
     rerenderTudo();
-  }, err => { console.error('Sync erro:', err); setSyncStatus('offline'); });
+  }, function(err){ console.error('Sync erro:', err); setSyncStatus('offline'); });
 }
 
 function pararSync() {
@@ -914,6 +963,7 @@ window.abrirModalPrincipal = function(tipo, id) {
 
 window.fecharModal = function(id) { document.getElementById(id).classList.remove('open'); };
 document.getElementById('modalPrincipal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
+document.getElementById('modalBackup').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
 
 function getDadosParaEditar(tipo, id) {
   const map = { gastos:'gastos', vendas:'vendas', casa:'casa', contas:'contas', ganhos:'ganhos', compromissos:'compromissos', contatos:'contatos' };
@@ -1069,10 +1119,82 @@ function salvarItem(key, item) {
 
 function deletarItem(key, id, cb) {
   if (!confirm('Excluir este item?')) return;
+  snapshotAuto('antes de excluir');
   S(key, (D(key)||[]).filter(i=>i.id!==id));
   showToast('Item excluído'); cb();
   if (typeof renderPainel==='function' && document.getElementById('graficoSemana')) renderPainel();
 }
+
+// ===== BACKUP E RECUPERAÇÃO =====
+function todosDados(){ const o={}; SYNC_KEYS.forEach(function(k){ const v=D(k); if(v!==null) o[k]=v; }); return o; }
+
+function snapshotAuto(motivo){
+  try{
+    let snaps=[]; try{ snaps=JSON.parse(localStorage.getItem('mc_snapshots')||'[]'); }catch(e){}
+    snaps.unshift({ ts:Date.now(), motivo:motivo||'auto', data:todosDados() });
+    snaps = snaps.slice(0,10);
+    localStorage.setItem('mc_snapshots', JSON.stringify(snaps));
+  }catch(e){ /* storage cheio: ignora */ }
+}
+
+window.baixarBackup = function(){
+  const pacote = { _app:'Meu Controle', _versao:1, _data:new Date().toISOString(), dados:todosDados() };
+  const blob = new Blob([JSON.stringify(pacote,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date(), p = n=>String(n).padStart(2,'0');
+  a.href = url;
+  a.download = 'meu-controle-backup-'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  showToast('📥 Backup baixado!','success');
+};
+
+window.restaurarArquivo = function(input){
+  const file = input.files && input.files[0]; if(!file){ return; }
+  const reader = new FileReader();
+  reader.onload = function(){
+    try{
+      const obj = JSON.parse(reader.result);
+      const dados = obj && obj.dados ? obj.dados : obj;
+      if(!dados || typeof dados!=='object') throw new Error('invalido');
+      if(!confirm('Restaurar este backup? Os dados atuais serão substituídos (um backup automático é guardado antes).')){ input.value=''; return; }
+      snapshotAuto('antes de restaurar arquivo');
+      SYNC_KEYS.forEach(function(k){ if(dados[k]!==undefined) S(k, dados[k]); });
+      showToast('✅ Backup restaurado!','success');
+      fecharModal('modalBackup');
+      if(typeof rerenderTudo==='function') rerenderTudo();
+    }catch(e){ showToast('❌ Arquivo de backup inválido','error'); }
+    input.value='';
+  };
+  reader.readAsText(file);
+};
+
+window.abrirBackup = function(){
+  if(typeof closeSidebar==='function') closeSidebar();
+  let snaps=[]; try{ snaps=JSON.parse(localStorage.getItem('mc_snapshots')||'[]'); }catch(e){}
+  const cont = document.getElementById('listaSnapshots');
+  cont.innerHTML = snaps.length ? snaps.map(function(s,i){
+    const d = new Date(s.ts);
+    const quando = d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    let qtd=0; try{ Object.keys(s.data||{}).forEach(function(k){ if(Array.isArray(s.data[k])) qtd+=s.data[k].length; }); }catch(e){}
+    return '<div class="list-item"><div class="item-info"><div class="item-name">'+quando+'</div>'+
+      '<div class="item-sub">'+(s.motivo||'auto')+' • '+qtd+' itens guardados</div></div>'+
+      '<button class="btn-ghost" style="padding:.35rem .7rem;font-size:.78rem" onclick="restaurarSnapshot('+i+')">↩️ Restaurar</button></div>';
+  }).join('') : '<div class="empty-state"><div class="empty-icon">🕘</div><div class="empty-text">Nenhum backup automático ainda</div></div>';
+  document.getElementById('modalBackup').classList.add('open');
+};
+
+window.restaurarSnapshot = function(i){
+  let snaps=[]; try{ snaps=JSON.parse(localStorage.getItem('mc_snapshots')||'[]'); }catch(e){}
+  const s = snaps[i]; if(!s) return;
+  if(!confirm('Restaurar o backup de '+new Date(s.ts).toLocaleString('pt-BR')+'?\nOs dados atuais serão substituídos (um backup automático é guardado antes).')) return;
+  snapshotAuto('antes de restaurar (automático)');
+  SYNC_KEYS.forEach(function(k){ if(s.data && s.data[k]!==undefined) S(k, s.data[k]); });
+  showToast('✅ Backup restaurado!','success');
+  fecharModal('modalBackup');
+  if(typeof rerenderTudo==='function') rerenderTudo();
+};
 
 let fgAtual = 'todos';
 window.setFiltroGastos = function(f, el) { fgAtual=f; document.querySelectorAll('#pageGastos .filter-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderGastos(); };
