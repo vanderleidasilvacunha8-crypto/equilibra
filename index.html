@@ -361,7 +361,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           <div class="stat-change" id="painelVendasComp">vs. ontem</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">💸 Gastos hoje</div>
+          <div class="stat-label">💸 Gastos hoje (neg. + casa)</div>
           <div class="stat-value red" id="painelGastosHoje">R$ 0,00</div>
           <div class="stat-change" id="painelGastosComp">vs. ontem</div>
         </div>
@@ -444,6 +444,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           <div class="card-header"><div class="card-title">📅 Próximos compromissos</div></div>
           <div id="painelProximosComp"><div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Nenhum compromisso</div></div></div>
         </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">💸 Últimos gastos (negócio + casa)</div></div>
+        <div id="painelUltimosGastos"><div class="empty-state"><div class="empty-icon">💸</div><div class="empty-text">Nenhum gasto ainda</div></div></div>
       </div>
     </div>
 
@@ -1414,9 +1419,11 @@ function renderPainel() {
   const ganhosHoje = somaDia(ganhos,h);
   const gastosHoje = somaDia(gastos,h);
   const casaHoje = somaDia(D('casa')||[],h);
+  const gastosHojeTotal = gastosHoje + casaHoje;   // tudo que saiu do bolso hoje
 
   const vendasOntem = somaDia(vendas,ontem);
   const gastosOntem = somaDia(gastos,ontem);
+  const gastosOntemTotal = gastosOntem + somaDia(D('casa')||[],ontem);
 
   const saldoHoje = vendasHoje + ganhosHoje - gastosHoje - casaHoje;
   document.getElementById('painelSaldoHoje').textContent = fmt(saldoHoje);
@@ -1429,7 +1436,7 @@ function renderPainel() {
   document.getElementById('painelSaldoMes').style.color = saldoMes>=0 ? 'var(--primary)' : 'var(--danger)';
 
   document.getElementById('painelVendasHoje').textContent = fmt(vendasHoje);
-  document.getElementById('painelGastosHoje').textContent = fmt(gastosHoje);
+  document.getElementById('painelGastosHoje').textContent = fmt(gastosHojeTotal);
 
   function compTexto(hojeVal, ontemVal) {
     if (ontemVal===0 && hojeVal===0) return 'sem dados ontem';
@@ -1439,7 +1446,7 @@ function renderPainel() {
     return seta+' '+Math.abs(diff).toFixed(0)+'% vs. ontem';
   }
   document.getElementById('painelVendasComp').textContent = compTexto(vendasHoje, vendasOntem);
-  document.getElementById('painelGastosComp').textContent = compTexto(gastosHoje, gastosOntem);
+  document.getElementById('painelGastosComp').textContent = compTexto(gastosHojeTotal, gastosOntemTotal);
 
   const fiadoPend = ganhos.filter(i=>i.pagamento==='fiado' && i.fiadoPago!=='sim');
   document.getElementById('painelFiadoPendente').textContent = fmt(fiadoPend.reduce((s,i)=>s+i.valor,0));
@@ -1480,6 +1487,20 @@ function renderPainel() {
         '<div class="item-icon" style="background:var(--info-dim)">'+(urgLabel[i.urgencia]||'🟡')+'</div>'+
         '<div class="item-info"><div class="item-name">'+i.desc+'</div><div class="item-sub">'+fmtData(i.data)+(i.hora?' às '+i.hora:'')+(i.local?' • '+i.local:'')+'</div></div></div>').join('')
     : '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Nenhum compromisso</div></div>';
+
+  // Últimos gastos (negócio + casa) — tudo que saiu do bolso
+  const casaArr = D('casa')||[];
+  const todosGastos = [
+    ...gastos.map(i=>Object.assign({_orig:'Negócio'},i)),
+    ...casaArr.map(i=>Object.assign({_orig:'Casa'},i))
+  ].sort((a,b)=>(b.data||'').localeCompare(a.data||'')).slice(0,6);
+  const elGastos = document.getElementById('painelUltimosGastos');
+  if (elGastos) elGastos.innerHTML = todosGastos.length
+    ? todosGastos.map(i=>'<div class="list-item">'+
+        '<div class="item-icon" style="background:var(--danger-dim)">'+(i._orig==='Casa'?'🏠':'💸')+'</div>'+
+        '<div class="item-info"><div class="item-name">'+i.desc+'</div><div class="item-sub">'+fmtData(i.data)+' • '+i._orig+'</div></div>'+
+        '<div class="item-value debit">'+fmt(i.valor)+'</div></div>').join('')
+    : '<div class="empty-state"><div class="empty-icon">💸</div><div class="empty-text">Nenhum gasto ainda</div></div>';
 
   // Gráfico: semana (7 dias) ou mês (todos os dias do mês até hoje)
   const dias = [];
